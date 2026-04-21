@@ -678,6 +678,40 @@
         }
         .btn-draw:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(17,153,142,0.6); }
 
+                /* ===== MODAL ===== */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1000;
+        }
+        .modal.show { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+            padding: 30px; width: 400px; max-width: 90%; text-align: center;
+            transform: translateY(20px); transition: transform 0.3s;
+        }
+        .modal.show .modal-box { transform: translateY(0); }
+
+        /* ===== SUMMARY BANNER ===== */
+        .summary-banner {
+            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+            border: 2px solid rgba(102,126,234,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .summary-content {
+            font-size: 1.2em; font-weight: 700; color: var(--text); margin-bottom: 15px;
+        }
+        .summary-content .highlight { color: var(--gold); font-size: 1.4em; }
+        .btn-draw {
+            background: linear-gradient(135deg, #11998e, #38ef7d); border: none; border-radius: 8px; padding: 12px 24px; font-size: 1.1em;
+            font-weight: 800; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(17,153,142,0.4); font-family: 'Sarabun', sans-serif;
+        }
+        .btn-draw:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(17,153,142,0.6); }
+
         .flash { animation: flashGold 0.8s ease-out; }
     </style>
 </head>
@@ -730,6 +764,12 @@
         <button id="btnTieBreaker" class="btn-draw" style="display:none;">🎲 จับฉลากสุ่มหาผู้ชนะ</button>
     </div>
 
+    <!-- SUMMARY BANNER -->
+    <div class="summary-banner" id="summaryBanner" style="display:none;">
+        <div class="summary-content" id="summaryContent"></div>
+        <button id="btnTieBreaker" class="btn-draw" style="display:none;">🎲 จับฉลากสุ่มหาผู้ชนะ</button>
+    </div>
+
     <!-- PODIUM -->
     <div class="section-hd">🏆 อันดับพรรค</div>
     <div id="podiumWrap" class="podium-wrap">
@@ -759,6 +799,15 @@
         </div>
     </div>
 
+    <!-- DRAW MODAL -->
+    <div class="modal" id="drawModal">
+        <div class="modal-box">
+            <h2 style="margin-top:0;">🎲 สุ่มผู้ชนะ (คะแนนเสมอกัน)</h2>
+            <div id="drawAnimation" style="font-size: 3em; padding: 40px 0; font-weight: bold;">?</div>
+            <div id="drawResult" style="display:none; margin-bottom: 20px;"></div>
+            <button class="back-btn" id="btnCloseDraw" style="margin: 0 auto; display:none; background:rgba(255,255,255,0.1); color:#fff;" onclick="document.getElementById('drawModal').classList.remove('show')">ปิดหน้าต่าง</button>
+        </div>
+    </div>
     <!-- DRAW MODAL -->
     <div class="modal" id="drawModal">
         <div class="modal-box">
