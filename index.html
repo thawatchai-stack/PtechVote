@@ -181,9 +181,9 @@
         }
 
         .party-icon {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; border-radius: 50%; overflow: hidden; background: #f9f9f9;
         }
+        .party-icon img { width: 100%; height: 100%; object-fit: cover; }
 
         .party-name {
             font-weight: 600;
@@ -1015,28 +1015,32 @@
         }
         .party-settings-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 1fr;
             gap: 15px;
             margin-bottom: 15px;
         }
         .party-setting-item {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            background: white; border: 2px solid #e9ecef; border-radius: 12px; padding: 12px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
         }
-        .party-setting-item .p-icon { font-size: 1.5em; }
-        .party-setting-item input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: 'Sarabun', sans-serif;
-            font-size: 0.95em;
+        .party-setting-item input[type="file"] { display: none; }
+        .p-img-preview {
+            width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+            border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; background: #fafafa; flex-shrink: 0; overflow: hidden;
         }
+        .p-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .party-setting-item input[type="text"] {
+            flex: 1; min-width: 120px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 0.95em;
+        }
+        .party-setting-item input[type="color"] {
+            -webkit-appearance: none; border: none; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; padding: 0; background: none; flex-shrink: 0;
+        }
+        .party-setting-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .party-setting-item input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+        .btn-delete-party {
+            background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex-shrink: 0; font-family: 'Sarabun', sans-serif;
+        }
+        .btn-delete-party:hover { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
@@ -1203,30 +1207,7 @@
                 <div class="form-group">
                     <label>เลือกพรรคที่คุณต้องการลงคะแนน</label>
                     <div class="party-grid" id="partyGrid">
-                        <div class="party-card" data-party="พรรค A">
-                            <div class="party-icon">🔴</div>
-                            <div class="party-name">พรรค A</div>
-                        </div>
-                        <div class="party-card" data-party="พรรค B">
-                            <div class="party-icon">🔵</div>
-                            <div class="party-name">พรรค B</div>
-                        </div>
-                        <div class="party-card" data-party="พรรค C">
-                            <div class="party-icon">🟢</div>
-                            <div class="party-name">พรรค C</div>
-                        </div>
-                        <div class="party-card" data-party="พรรค D">
-                            <div class="party-icon">🟡</div>
-                            <div class="party-name">พรรค D</div>
-                        </div>
-                        <div class="party-card" data-party="พรรค E">
-                            <div class="party-icon">🟣</div>
-                            <div class="party-name">พรรค E</div>
-                        </div>
-                        <div class="party-card" data-party="พรรค F">
-                            <div class="party-icon">🟠</div>
-                            <div class="party-name">พรรค F</div>
-                        </div>
+                        <!-- Rendered by JS -->
                     </div>
                 </div>
 
@@ -1283,7 +1264,10 @@
             <!-- Party Settings Dashboard -->
             <div class="section-title" style="margin-top: 25px;">🏷️ ตั้งค่าชื่อพรรค</div>
             <div class="party-settings-grid" id="partySettingsGrid"></div>
-            <button class="btn btn-primary" id="savePartyNames" style="margin-bottom: 25px;">💾 บันทึกชื่อพรรค</button>
+            <div style="display:flex; gap:10px; margin-bottom: 25px;">
+                <button class="btn btn-secondary" id="btnAddParty" style="margin-top:0;">➕ เพิ่มพรรค</button>
+                <button class="btn btn-primary" id="savePartyNames" style="margin-top:0;">💾 บันทึกการตั้งค่าพรรค</button>
+            </div>
 
             <!-- Classroom Dashboard -->
             <div class="section-title">🏫 สถิติรายห้อง</div>
@@ -1324,18 +1308,90 @@
             currentPage = pageNumber;
         }
 
+        let adminEditingParties = {}; 
+
+        async function compressImage(file, maxSizeKB = 100) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 300;
+                        if (width > height && width > maxDim) {
+                            height *= maxDim / width; width = maxDim;
+                        } else if (height > maxDim) {
+                            width *= maxDim / height; height = maxDim;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         function loadAdminPartySettings() {
+            adminEditingParties = JSON.parse(JSON.stringify(partyConfig));
+            renderAdminPartyGrid();
+        }
+
+        function renderAdminPartyGrid() {
             const grid = document.getElementById('partySettingsGrid');
             grid.innerHTML = '';
-            Object.keys(partyIcons).forEach(partyId => {
+            Object.values(adminEditingParties).forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'party-setting-item';
+                
+                let previewHtml = p.imageUrl 
+                    ? `<img src="${p.imageUrl}">` 
+                    : `<span>${p.icon || '🗳️'}</span>`;
+
                 item.innerHTML = `
-                    <div class="p-icon">${partyIcons[partyId]}</div>
-                    <div style="font-size: 0.8em; color: #888; width: 45px;">${partyId}</div>
-                    <input type="text" id="input_${partyId.replace(/ /g, '')}" value="${customPartyNames[partyId] || partyId}" placeholder="ชื่อพรรค">
+                    <label class="p-img-preview" title="คลิกเพื่ออัปโหลดรูป" style="color:${p.color}; border-color:${p.color};">
+                        ${previewHtml}
+                        <input type="file" accept="image/*" class="party-img-input" data-id="${p.id}">
+                    </label>
+                    <input type="color" value="${p.color || '#667eea'}" class="party-color-input" data-id="${p.id}" title="สีพรรค">
+                    <input type="text" value="${p.name}" class="party-name-input" data-id="${p.id}" placeholder="ชื่อพรรค">
+                    <button class="btn-delete-party" data-id="${p.id}" title="ลบพรรค">ลบ</button>
                 `;
                 grid.appendChild(item);
+            });
+            
+            grid.querySelectorAll('.party-name-input').forEach(input => {
+                input.addEventListener('input', (e) => { adminEditingParties[e.target.dataset.id].name = e.target.value; });
+            });
+            grid.querySelectorAll('.party-color-input').forEach(input => {
+                input.addEventListener('input', (e) => { 
+                    adminEditingParties[e.target.dataset.id].color = e.target.value; 
+                    e.target.previousElementSibling.style.borderColor = e.target.value;
+                    e.target.previousElementSibling.style.color = e.target.value;
+                });
+            });
+            grid.querySelectorAll('.party-img-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const base64 = await compressImage(file);
+                        adminEditingParties[e.target.dataset.id].imageUrl = base64;
+                        renderAdminPartyGrid();
+                    }
+                });
+            });
+            grid.querySelectorAll('.btn-delete-party').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (confirm(`คุณต้องการลบพรรค "${adminEditingParties[e.target.dataset.id].name}" ใช่หรือไม่?`)) {
+                        delete adminEditingParties[e.target.dataset.id];
+                        renderAdminPartyGrid();
+                    }
+                });
             });
         }
 
@@ -1629,23 +1685,42 @@
             showPage(2);
         });
 
-        // ===== BACK TO PAGE 1 =====
-        document.getElementById('backToPage1').addEventListener('click', () => showPage(1));
-
-        // ===== PARTY SELECTION =====
-        document.querySelectorAll('.party-card').forEach(card => {
-            card.addEventListener('click', () => {
-                document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                selectedParty = card.dataset.party;
-            });
-        });
-
-        // ===== PARTY ICON MAP =====
-        const partyIcons = {
-            'พรรค A': '🔴', 'พรรค B': '🔵', 'พรรค C': '🟢',
-            'พรรค D': '🟡', 'พรรค E': '🟣', 'พรรค F': '🟠'
+        // ===== PARTY CONFIG =====
+        let partyConfig = {
+            'พรรค A': { id: 'พรรค A', name: 'พรรค A', icon: '🔴', color: '#f87171', imageUrl: '' },
+            'พรรค B': { id: 'พรรค B', name: 'พรรค B', icon: '🔵', color: '#60a5fa', imageUrl: '' },
+            'พรรค C': { id: 'พรรค C', name: 'พรรค C', icon: '🟢', color: '#4ade80', imageUrl: '' },
+            'พรรค D': { id: 'พรรค D', name: 'พรรค D', icon: '🟡', color: '#facc15', imageUrl: '' },
+            'พรรค E': { id: 'พรรค E', name: 'พรรค E', icon: '🟣', color: '#c084fc', imageUrl: '' },
+            'พรรค F': { id: 'พรรค F', name: 'พรรค F', icon: '🟠', color: '#fb923c', imageUrl: '' }
         };
+
+        function renderPartyGrid() {
+            const grid = document.getElementById('partyGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            Object.values(partyConfig).forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'party-card';
+                card.dataset.party = p.id;
+                
+                let iconHtml = p.imageUrl 
+                    ? `<img src="${p.imageUrl}" alt="${p.name}">`
+                    : `<span>${p.icon || '🗳️'}</span>`;
+                    
+                card.innerHTML = `
+                    <div class="party-icon" style="color: ${p.color}; border: 2px solid ${p.color}33;">${iconHtml}</div>
+                    <div class="party-name">${p.name}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedParty = p.id;
+                });
+                grid.appendChild(card);
+            });
+        }
 
         // ===== MODAL HELPERS =====
         const modalOverlay  = document.getElementById('confirmModal');
@@ -1654,9 +1729,19 @@
         const modalCancel   = document.getElementById('modalCancel');
         const modalConfirm  = document.getElementById('modalConfirm');
 
-        function openConfirmModal(partyName) {
-            modalPartyIcon.textContent = partyIcons[partyName] || '🗳️';
-            modalPartyName.textContent = customPartyNames[partyName] || partyName;
+        // ===== BACK TO PAGE 1 =====
+        document.getElementById('backToPage1').addEventListener('click', () => showPage(1));
+
+        function openConfirmModal(partyId) {
+            const p = partyConfig[partyId];
+            if (p && p.imageUrl) {
+                modalPartyIcon.innerHTML = `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                modalPartyIcon.style.borderColor = p.color;
+            } else {
+                modalPartyIcon.innerHTML = p ? (p.icon || '🗳️') : '🗳️';
+                if(p) modalPartyIcon.style.borderColor = p.color;
+            }
+            modalPartyName.textContent = p ? p.name : partyId;
             modalOverlay.classList.add('show');
             modalConfirm.disabled = false;
             modalConfirm.textContent = '✅ ยืนยัน';
@@ -1769,9 +1854,14 @@
         const successPartyIcon  = document.getElementById('successPartyIcon');
         const successPartyName  = document.getElementById('successPartyName');
 
-        function openSuccessModal(partyName) {
-            successPartyIcon.textContent = partyIcons[partyName] || '🗳️';
-            successPartyName.textContent = customPartyNames[partyName] || partyName;
+        function openSuccessModal(partyId) {
+            const p = partyConfig[partyId];
+            if (p && p.imageUrl) {
+                successPartyIcon.innerHTML = `<img src="${p.imageUrl}" style="width:28px;height:28px;object-fit:cover;border-radius:50%;display:inline-block;">`;
+            } else {
+                successPartyIcon.innerHTML = p ? (p.icon || '🗳️') : '🗳️';
+            }
+            successPartyName.textContent = p ? p.name : partyId;
             successModal.classList.add('show');
         }
 
@@ -1913,46 +2003,37 @@
             }
         }
 
+        document.getElementById('btnAddParty').addEventListener('click', () => {
+            const newId = 'party_' + Date.now();
+            adminEditingParties[newId] = {
+                id: newId, name: 'พรรคใหม่', icon: '❔', color: '#667eea', imageUrl: ''
+            };
+            renderAdminPartyGrid();
+        });
+
         document.getElementById('savePartyNames').addEventListener('click', async () => {
             const btn = document.getElementById('savePartyNames');
-            btn.disabled = true;
-            btn.textContent = '⏳ กำลังบันทึก...';
-            
-            const newNames = {};
-            Object.keys(partyIcons).forEach(partyId => {
-                const inputEl = document.getElementById('input_' + partyId.replace(/ /g, ''));
-                if (inputEl) {
-                    newNames[partyId] = inputEl.value.trim() || partyId; // default to original if empty
-                }
-            });
-            
+            btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
             try {
-                await setDoc(doc(db, 'config', 'parties'), newNames);
-                showToast('บันทึกชื่อพรรคเรียบร้อยแล้ว', 'success');
+                await setDoc(doc(db, 'config', 'partyDetails'), { parties: adminEditingParties });
+                showToast('บันทึกการตั้งค่าพรรคเรียบร้อย', 'success');
             } catch (err) {
                 showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
             } finally {
-                btn.disabled = false;
-                btn.textContent = '💾 บันทึกชื่อพรรค';
+                btn.disabled = false; btn.textContent = '💾 บันทึกการตั้งค่าพรรค';
             }
         });
 
         console.log('P.TECH Vote 69 initialized');
-        let customPartyNames = {
-            'พรรค A': 'พรรค A', 'พรรค B': 'พรรค B', 'พรรค C': 'พรรค C',
-            'พรรค D': 'พรรค D', 'พรรค E': 'พรรค E', 'พรรค F': 'พรรค F'
-        };
+        renderPartyGrid(); // Initial
 
-        onSnapshot(doc(db, 'config', 'parties'), (docSnap) => {
-            if (docSnap.exists()) {
-                customPartyNames = { ...customPartyNames, ...docSnap.data() };
-                document.querySelectorAll('.party-card').forEach(card => {
-                    const partyId = card.dataset.party;
-                    const nameEl = card.querySelector('.party-name');
-                    if (nameEl && customPartyNames[partyId]) {
-                        nameEl.textContent = customPartyNames[partyId];
-                    }
-                });
+        onSnapshot(doc(db, 'config', 'partyDetails'), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().parties) {
+                partyConfig = docSnap.data().parties;
+            }
+            renderPartyGrid();
+            if (document.getElementById('adminPanel').classList.contains('active')) {
+                loadAdminPartySettings();
             }
         });
 
