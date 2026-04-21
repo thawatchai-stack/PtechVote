@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ผลการเลือกตั้ง — P.TECH Vote 69</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0b0f1a;
+            --surface:   #111827;
+            --surface2:  #1e2a3a;
+            --border:    rgba(255,255,255,0.08);
+            --text:      #f1f5f9;
+            --sub:       #94a3b8;
+            --gold:      #ffd200;
+            --gold2:     #f7971e;
+            --accent:    #667eea;
+            --accent2:   #764ba2;
+
+            /* party colours */
+            --ca: #ef4444;  /* A - Red  */
+            --cb: #3b82f6;  /* B - Blue */
+            --cc: #22c55e;  /* C - Green*/
+            --cd: #eab308;  /* D - Yellow*/
+            --ce: #a855f7;  /* E - Purple*/
+            --cf: #f97316;  /* F - Orange*/
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== ANIMATED BG ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% -10%, rgba(102,126,234,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 110%, rgba(118,75,162,0.12) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== PAGE WRAPPER ===== */
+        .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+        /* ===== TOP BAR ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            color: var(--sub);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-size: 0.9em;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s;
+        }
+        .back-btn:hover { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82em;
+            font-weight: 700;
+            color: #f87171;
+            letter-spacing: 1px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(0.7); }
+        }
+
+        /* ===== HEADER ===== */
+        .hero {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .hero-logo {
+            font-size: 1.1em;
+            color: var(--sub);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .hero-title {
+            font-size: clamp(1.6em, 4vw, 2.6em);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold2), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            margin-bottom: 6px;
+        }
+
+        .hero-sub {
+            font-size: 0.9em;
+            color: var(--sub);
+        }
+
+        /* ===== STAT ROW ===== */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 16px;
+            text-align: center;
+        }
+
+        .stat-box .s-val {
+            font-size: 2em;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-box.green .s-val {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-box.gold .s-val {
+            background: linear-gradient(135deg, var(--gold2), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-box .s-lbl {
+            font-size: 0.8em;
+            color: var(--sub);
+            margin-top: 5px;
+        }
+
+        .last-update {
+            font-size: 0.75em;
+            color: var(--sub);
+            text-align: center;
+            margin-bottom: 24px;
+            opacity: 0.7;
+        }
+
+        /* ===== SECTION HEADER ===== */
+        .section-hd {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: var(--sub);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-hd::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ===== PARTY PODIUM ===== */
+        .podium-wrap {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 36px;
+            min-height: 300px;
+            padding: 0 8px;
+        }
+
+        .podium-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 180px;
+            transition: all 0.5s ease;
+        }
+
+        /* rank badge */
+        .rank-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .rank-badge.r1 { background: linear-gradient(135deg, var(--gold2), var(--gold)); color: #1a1a1a; font-size: 1em; width: 40px; height: 40px; }
+        .rank-badge.r2 { background: linear-gradient(135deg, #94a3b8, #cbd5e1); color: #1a1a1a; }
+        .rank-badge.r3 { background: linear-gradient(135deg, #b45309, #d97706); color: white; }
+        .rank-badge.r-other { background: var(--surface2); color: var(--sub); border: 1px solid var(--border); }
+
+        /* party icon */
+        .p-icon { font-size: 2.2em; margin-bottom: 4px; }
+        .r1-col .p-icon { font-size: 2.8em; }
+
+        /* vote bar */
+        .p-bar-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .p-votes {
+            font-size: 1.4em;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .r1-col .p-votes { font-size: 2em; }
+
+        .p-pct {
+            font-size: 0.78em;
+            color: var(--sub);
+            margin-bottom: 8px;
+        }
+
+        .p-bar {
+            width: 100%;
+            border-radius: 10px 10px 0 0;
+            min-height: 10px;
+            transition: height 0.8s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .p-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 40%;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px 10px 0 0;
+        }
+
+        /* Party color scheme */
+        .party-a .p-bar { background: linear-gradient(180deg, #f87171, #dc2626); }
+        .party-b .p-bar { background: linear-gradient(180deg, #60a5fa, #2563eb); }
+        .party-c .p-bar { background: linear-gradient(180deg, #4ade80, #16a34a); }
+        .party-d .p-bar { background: linear-gradient(180deg, #facc15, #ca8a04); }
+        .party-e .p-bar { background: linear-gradient(180deg, #c084fc, #9333ea); }
+        .party-f .p-bar { background: linear-gradient(180deg, #fb923c, #ea580c); }
+        .party-x .p-bar { background: linear-gradient(180deg, #94a3b8, #64748b); }
+
+        .party-a .p-votes { color: #f87171; }
+        .party-b .p-votes { color: #60a5fa; }
+        .party-c .p-votes { color: #4ade80; }
+        .party-d .p-votes { color: #facc15; }
+        .party-e .p-votes { color: #c084fc; }
+        .party-f .p-votes { color: #fb923c; }
+
+        /* ===== BASE PLATFORM ===== */
+        .platform-base {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 0 6px;
+            width: 100%;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .p-name {
+            font-size: 0.88em;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ===== FULL LIST TABLE ===== */
+        .results-table {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 36px;
+        }
+
+        .rt-row {
+            display: grid;
+            grid-template-columns: 48px 1fr auto auto;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .rt-row:last-child { border-bottom: none; }
+        .rt-row:hover { background: var(--surface2); }
+
+        .rt-row.header {
+            background: rgba(255,255,255,0.03);
+            font-size: 0.78em;
+            font-weight: 700;
+            color: var(--sub);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px 20px;
+        }
+
+        .rt-rank {
+            text-align: center;
+        }
+
+        .rt-party {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rt-party-icon { font-size: 1.4em; }
+
+        .rt-party-name {
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .rt-bar-col {
+            width: 120px;
+        }
+
+        .rt-mini-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .rt-mini-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.7s ease;
+        }
+
+        .rt-votes {
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: right;
+            min-width: 60px;
+        }
+
+        .rt-pct {
+            font-size: 0.8em;
+            color: var(--sub);
+            text-align: right;
+        }
+
+        /* ===== CLASSROOM TABLE ===== */
+        .classroom-section { margin-bottom: 36px; }
+
+        .classroom-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .cls-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            transition: background 0.2s;
+        }
+
+        .cls-card:hover { background: var(--surface2); }
+
+        .cls-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .cls-name { font-weight: 700; font-size: 0.95em; }
+
+        .cls-count {
+            font-size: 0.85em;
+            color: var(--sub);
+        }
+
+        .cls-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .cls-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.7s ease;
+        }
+
+        .cls-fill.full { background: linear-gradient(90deg, #11998e, #38ef7d); }
+
+        .cls-pct {
+            font-size: 0.78em;
+            color: var(--sub);
+            text-align: right;
+        }
+
+        /* ===== LOADING / EMPTY ===== */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            gap: 16px;
+            color: var(--sub);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--sub);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .podium-wrap { gap: 6px; }
+            .p-votes { font-size: 1.1em; }
+            .r1-col .p-votes { font-size: 1.5em; }
+            .rt-bar-col { display: none; }
+            .rt-row { grid-template-columns: 40px 1fr auto; gap: 8px; }
+            .classroom-list { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 400px) {
+            .classroom-list { grid-template-columns: 1fr; }
+        }
+
+        /* ===== FLASH ANIMATION on update ===== */
+        @keyframes flashGold {
+            0%   { background: rgba(255,210,0,0.15); }
+            100% { background: transparent; }
+        }
+
+        /* ===== WINNER EFFECTS (FIREWORKS & GLOW) ===== */
+        .winner-fx {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
+            display: none;
+        }
+
+        .r1-col .winner-fx {
+            display: block;
+        }
+
+        .winner-fx .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(255,210,0,0.4) 0%, transparent 60%);
+            border-radius: 50%;
+            animation: winnerGlowPulse 2s infinite alternate;
+        }
+
+        @keyframes winnerGlowPulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+        }
+
+        .winner-fx .fw {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: transparent;
+        }
+        .winner-fx .fw1 { animation: fwExplode1 1.2s infinite ease-out; }
+        .winner-fx .fw2 { animation: fwExplode2 1.5s infinite ease-out 0.4s; }
+        .winner-fx .fw3 { animation: fwExplode3 1.8s infinite ease-out 0.8s; }
+
+        @keyframes fwExplode1 {
+            0% { transform: translate(-50%, -50%) scale(0); box-shadow: 0 0 0 0 white; opacity: 1; }
+            100% { 
+                transform: translate(-50%, -50%) scale(1.2); 
+                box-shadow: 
+                    -40px -40px 0 1px #ffd200, 40px -40px 0 1px #ff4040, 
+                    40px 40px 0 1px #40ff40, -40px 40px 0 1px #4040ff, 
+                    0 -60px 0 1px #ff40ff, 60px 0 0 1px #40ffff, 
+                    0 60px 0 1px #ffffff, -60px 0 0 1px #ff8000; 
+                opacity: 0; 
+            }
+        }
+        @keyframes fwExplode2 {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(22deg); box-shadow: 0 0 0 0 white; opacity: 1; }
+            100% { 
+                transform: translate(-50%, -50%) scale(1) rotate(22deg); 
+                box-shadow: 
+                    -50px -30px 0 1px #40ffff, 50px -30px 0 1px #ff40ff, 
+                    30px 50px 0 1px #ffd200, -30px 50px 0 1px #ff4040, 
+                    -20px -70px 0 1px #40ff40, 70px 20px 0 1px #4040ff, 
+                    20px 70px 0 1px #ff8000, -70px -20px 0 1px #ffffff; 
+                opacity: 0; 
+            }
+        }
+        @keyframes fwExplode3 {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-22deg); box-shadow: 0 0 0 0 white; opacity: 1; }
+            100% { 
+                transform: translate(-50%, -50%) scale(0.9) rotate(-22deg); 
+                box-shadow: 
+                    -30px -30px 0 2px #ffd200, 30px -30px 0 2px #ff40ff, 
+                    30px 30px 0 2px #40ffff, -30px 30px 0 2px #ff4040; 
+                opacity: 0; 
+            }
+        }
+
+        .r1-col .p-icon {
+            animation: winnerIconFloat 3s infinite ease-in-out;
+            position: relative;
+        }
+
+        @keyframes winnerIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .winner-ribbon {
+            position: absolute;
+            top: 85%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--gold2), var(--gold));
+            color: #111;
+            font-size: 0.35em;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 8px;
+            display: none;
+            z-index: 10;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(255,210,0,0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .r1-col .winner-ribbon {
+            display: block;
+            animation: ribbonPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        @keyframes ribbonPop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+    </style>
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1000;
+        }
+        .modal.show { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+            padding: 30px; width: 400px; max-width: 90%; text-align: center;
+            transform: translateY(20px); transition: transform 0.3s;
+        }
+        .modal.show .modal-box { transform: translateY(0); }
+
+        /* ===== SUMMARY BANNER ===== */
+        .summary-banner {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: rgba(18, 22, 38, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+            text-align: right;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @media (max-width: 600px) {
+            .summary-banner { bottom: 15px; left: 15px; right: 15px; max-width: none; align-items: center; text-align: center; }
+        }
+        .summary-content {
+            font-size: 0.9em; font-weight: 700; color: var(--text); margin-bottom: 12px; line-height: 1.4;
+        }
+        .summary-content .highlight { color: var(--gold); font-size: 1.2em; }
+        .btn-draw {
+            background: linear-gradient(135deg, #11998e, #38ef7d); border: none; border-radius: 8px; padding: 10px 16px; font-size: 0.9em;
+            font-weight: 800; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(17,153,142,0.4); font-family: 'Sarabun', sans-serif;
+        }
+        .btn-draw:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(17,153,142,0.6); }
+
+        .flash { animation: flashGold 0.8s ease-out; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="index.html" class="back-btn">← กลับสู่หน้าลงคะแนน</a>
+            <a href="index.html?admin=true" class="back-btn" style="border-color: rgba(102,126,234,0.5); background: rgba(102,126,234,0.1); color: #fff;">⚙️ กลับสู่หน้า Admin</a>
+        </div>
+        <div class="live-badge">
+            <div class="live-dot"></div>
+            LIVE REAL-TIME
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-logo">🗳️ P.TECH Vote 69</div>
+        <div class="hero-title">ผลการนับคะแนนเลือกตั้ง</div>
+        <div class="hero-sub">สภานักเรียน ปีการศึกษา 2569 (อย่างไม่เป็นทางการ)</div>
+    </div>
+
+    <!-- STAT ROW -->
+    <div class="stat-row">
+        <div class="stat-box green">
+            <div class="s-val" id="statTotalVotes">—</div>
+            <div class="s-lbl">คะแนนเสียงทั้งหมด</div>
+        </div>
+        <div class="stat-box gold">
+            <div class="s-val" id="statPct">—</div>
+            <div class="s-lbl">% ผู้ใช้สิทธิ์</div>
+        </div>
+        <div class="stat-box">
+            <div class="s-val" id="statTotalStudents">—</div>
+            <div class="s-lbl">ผู้มีสิทธิ์เลือกตั้ง</div>
+        </div>
+        <div class="stat-box">
+            <div class="s-val" id="statRooms">—</div>
+            <div class="s-lbl">ห้องเรียนทั้งหมด</div>
+        </div>
+    </div>
+    <div class="last-update" id="lastUpdate">กำลังเชื่อมต่อ...</div>
+
+    <!-- SUMMARY BANNER -->
+    <div class="summary-banner" id="summaryBanner" style="display:none;">
+        <div class="summary-content" id="summaryContent"></div>
+        <button id="btnTieBreaker" class="btn-draw" style="display:none;">🎲 จับฉลากสุ่มหาผู้ชนะ</button>
+    </div>
+
+    <!-- PODIUM -->
+    <div class="section-hd">🏆 อันดับพรรค</div>
+    <div id="podiumWrap" class="podium-wrap">
+        <div class="loading-screen">
+            <div class="spinner"></div>
+            <span>กำลังดึงข้อมูล...</span>
+        </div>
+    </div>
+
+    <!-- FULL TABLE -->
+    <div class="section-hd">📋 ผลคะแนนรายพรรค</div>
+    <div class="results-table" id="resultsTable">
+        <div class="rt-row header">
+            <div>อันดับ</div>
+            <div>พรรค</div>
+            <div class="rt-bar-col"></div>
+            <div style="text-align:right">คะแนน</div>
+        </div>
+        <!-- Rows injected by JS -->
+    </div>
+
+    <!-- CLASSROOM PARTICIPATION -->
+    <div class="section-hd">🏫 สถิติรายห้อง</div>
+    <div class="classroom-list" id="classroomList">
+        <div class="loading-screen" style="grid-column:1/-1">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- DRAW MODAL -->
+    <div class="modal" id="drawModal">
+        <div class="modal-box">
+            <h2 style="margin-top:0;">🎲 สุ่มผู้ชนะ (คะแนนเสมอกัน)</h2>
+            <div id="drawAnimation" style="font-size: 3em; padding: 40px 0; font-weight: bold;">?</div>
+            <div id="drawResult" style="display:none; margin-bottom: 20px;"></div>
+            <button class="back-btn" id="btnCloseDraw" style="margin: 0 auto; display:none; background:rgba(255,255,255,0.1); color:#fff;" onclick="document.getElementById('drawModal').classList.remove('show')">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, getDocs, onSnapshot, query, orderBy, doc, setDoc }
+        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyAdfVLD3iFX38JIpnHsnjg0SHTpSjhD2LU",
+        authDomain:        "ptechvote.firebaseapp.com",
+        projectId:         "ptechvote",
+        storageBucket:     "ptechvote.firebasestorage.app",
+        messagingSenderId: "977883969042",
+        appId:             "1:977883969042:web:c3957d1ebfa26736e5cacb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ===== PARTY CONFIG =====
+    let partyConfig = {
+        'พรรค A': { id: 'พรรค A', name: 'พรรค A', icon: '🔴', color: '#f87171', imageUrl: '' },
+        'พรรค B': { id: 'พรรค B', name: 'พรรค B', icon: '🔵', color: '#60a5fa', imageUrl: '' },
+        'พรรค C': { id: 'พรรค C', name: 'พรรค C', icon: '🟢', color: '#4ade80', imageUrl: '' },
+        'พรรค D': { id: 'พรรค D', name: 'พรรค D', icon: '🟡', color: '#facc15', imageUrl: '' },
+        'พรรค E': { id: 'พรรค E', name: 'พรรค E', icon: '🟣', color: '#c084fc', imageUrl: '' },
+        'พรรค F': { id: 'พรรค F', name: 'พรรค F', icon: '🟠', color: '#fb923c', imageUrl: '' }
+    };
+
+    // default for unknown parties
+    function getMeta(partyId) {
+        return partyConfig[partyId] || { id: partyId, name: partyId, icon: '⚪', color: '#94a3b8', imageUrl: '' };
+    }
+
+    // ===== PODIUM ORDER: 2nd | 1st | 3rd | rest =====
+    function podiumOrder(sorted) {
+        if (sorted.length === 0) return [];
+        if (sorted.length === 1) return [sorted[0]];
+        if (sorted.length === 2) return [sorted[1], sorted[0]];
+        const rest = sorted.slice(3);
+        return [sorted[1], sorted[0], sorted[2], ...rest];
+    }
+
+    // ===== FORMAT TIME =====
+    function fmtTime(d) {
+        return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ===== RENDER PODIUM =====
+    function renderPodium(sorted, totalVotes) {
+        const wrap = document.getElementById('podiumWrap');
+        const maxH = 220;
+        const minH = 20;
+        const maxVotes = sorted[0]?.votes || 1;
+
+        const ordered = podiumOrder(sorted);
+        const rankMap  = {}; // party → visual rank
+        sorted.forEach((p, i) => { rankMap[p.name] = i + 1; });
+
+        wrap.innerHTML = '';
+
+        if (sorted.length === 0) {
+            wrap.innerHTML = '<div class="no-data">ยังไม่มีผลคะแนน</div>';
+            return;
+        }
+
+        ordered.forEach(party => {
+            const rank   = rankMap[party.name];
+            const meta   = getMeta(party.name);
+            const pct    = totalVotes > 0 ? (party.votes / totalVotes * 100).toFixed(1) : '0.0';
+            const barH   = Math.max(minH, Math.round((party.votes / maxVotes) * maxH));
+
+            const rankCls = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'r-other';
+            const colCls  = rank === 1 ? 'r1-col' : '';
+            const rankLbl = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+            let iconHtml = meta.imageUrl 
+                ? `<img src="${meta.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
+                : meta.icon;
+
+            const col = document.createElement('div');
+            col.className = `podium-col ${colCls}`;
+            col.style.position = 'relative';
+            col.innerHTML = `
+                <div class="winner-fx">
+                    <div class="glow"></div>
+                    <div class="fw fw1"></div>
+                    <div class="fw fw2"></div>
+                    <div class="fw fw3"></div>
+                </div>
+                <div class="rank-badge ${rankCls}">${rankLbl}</div>
+                <div class="p-icon" style="width: 2.5em; height: 2.5em; display:flex; align-items:center; justify-content:center; position:relative;">
+                    ${iconHtml}
+                    <div class="winner-ribbon">🏆 ผู้ชนะ</div>
+                </div>
+                <div class="p-bar-wrap">
+                    <div class="p-votes" style="color: ${meta.color}">${party.votes.toLocaleString()}</div>
+                    <div class="p-pct">${pct}%</div>
+                    <div class="p-bar" style="height:${barH}px; background: ${meta.color}"></div>
+                </div>
+                <div class="platform-base">
+                    <div class="p-name">${meta.name}</div>
+                </div>
+            `;
+            wrap.appendChild(col);
+        });
+    }
+
+    // ===== RENDER TABLE =====
+    function renderTable(sorted, totalVotes) {
+        const table  = document.getElementById('resultsTable');
+        const maxVotes = sorted[0]?.votes || 1;
+
+        // keep header row
+        const header = table.querySelector('.rt-row.header');
+        table.innerHTML = '';
+        table.appendChild(header);
+
+        if (sorted.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'no-data';
+            empty.textContent = 'ยังไม่มีข้อมูล';
+            table.appendChild(empty);
+            return;
+        }
+
+        sorted.forEach((party, i) => {
+            const meta  = getMeta(party.name);
+            const pct   = totalVotes > 0 ? (party.votes / totalVotes * 100).toFixed(1) : '0.0';
+            const barW  = maxVotes > 0 ? (party.votes / maxVotes * 100) : 0;
+
+            const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+
+            let iconHtml = meta.imageUrl 
+                ? `<img src="${meta.imageUrl}" style="width:1.4em; height:1.4em; border-radius:50%; object-fit:cover; display:inline-block;">` 
+                : meta.icon;
+
+            const row = document.createElement('div');
+            row.className = 'rt-row';
+            row.innerHTML = `
+                <div class="rt-rank">${rankEmoji}</div>
+                <div class="rt-party">
+                    <span class="rt-party-icon" style="display:flex; align-items:center;">${iconHtml}</span>
+                    <span class="rt-party-name">${meta.name}</span>
+                </div>
+                <div class="rt-bar-col">
+                    <div class="rt-mini-bar">
+                        <div class="rt-mini-fill" style="width:${barW}%;background:${meta.color}"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="rt-votes" style="color:${meta.color}">${party.votes.toLocaleString()}</div>
+                    <div class="rt-pct">${pct}%</div>
+                </div>
+            `;
+            table.appendChild(row);
+        });
+    }
+
+    // ===== RENDER STATS =====
+    function renderStats(sorted, classrooms) {
+        const totalVotes   = sorted.reduce((s, p) => s + p.votes, 0);
+        const totalStudents = classrooms.reduce((s, c) => s + (c.totalStudents || 0), 0);
+        const pct = totalStudents > 0
+            ? ((totalVotes / totalStudents) * 100).toFixed(1) + '%'
+            : '—';
+
+        document.getElementById('statTotalVotes').textContent    = totalVotes.toLocaleString();
+        document.getElementById('statPct').textContent           = pct;
+        document.getElementById('statTotalStudents').textContent = totalStudents.toLocaleString() || '—';
+        document.getElementById('statRooms').textContent         = classrooms.length;
+        document.getElementById('lastUpdate').textContent        = `อัปเดตล่าสุด: ${fmtTime(new Date())}`;
+    }
+
+    // ===== RENDER CLASSROOMS =====
+    function renderClassrooms(classrooms) {
+        const list = document.getElementById('classroomList');
+        list.innerHTML = '';
+
+        if (classrooms.length === 0) {
+            list.innerHTML = '<div class="no-data" style="grid-column:1/-1">ยังไม่มีข้อมูลห้องเรียน</div>';
+            return;
+        }
+
+        classrooms.forEach(c => {
+            const voted = c.votedCount    || 0;
+            const total = c.totalStudents || 0;
+            const pct   = total > 0 ? (voted / total * 100) : 0;
+            const full  = pct >= 100;
+
+            const card = document.createElement('div');
+            card.className = 'cls-card';
+            card.innerHTML = `
+                <div class="cls-top">
+                    <div class="cls-name">${c.id}</div>
+                    <div class="cls-count">${voted}/${total > 0 ? total : '?'}</div>
+                </div>
+                <div class="cls-bar">
+                    <div class="cls-fill ${full ? 'full' : ''}" style="width:${Math.min(pct, 100)}%"></div>
+                </div>
+                <div class="cls-pct">${total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน'}</div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    // ===== SORT CLASSROOMS =====
+    function sortClassrooms(arr) {
+        return arr.sort((a, b) => {
+            const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+            const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+            if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
+            if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
+            if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
+            return parseInt(aM[3]) - parseInt(bM[3]);
+        });
+    }
+
+    // ===== SHARED STATE =====
+    let latestVotes      = [];   
+    let latestClassrooms = [];
+    let globalTally      = {};
+    let forcedWinner     = null;
+    let forcedWinnerVotes= 0;
+
+    function processAndRender() {
+        let arr = Object.entries(globalTally).map(([name, votes]) => ({ name, votes }));
+        Object.keys(partyConfig).forEach(p => {
+            if (!arr.find(x => x.name === p)) arr.push({ name: p, votes: 0 });
+        });
+        
+        arr.sort((a, b) => {
+            if (b.votes !== a.votes) return b.votes - a.votes;
+            if (forcedWinner && forcedWinnerVotes === a.votes) {
+                if (a.name === forcedWinner) return -1;
+                if (b.name === forcedWinner) return 1;
+            }
+            return (partyConfig[a.name]?.name || a.name).localeCompare(partyConfig[b.name]?.name || b.name, 'th');
+        });
+        latestVotes = arr;
+
+        const total = latestVotes.reduce((s, p) => s + p.votes, 0);
+        renderPodium(latestVotes, total);
+        renderTable(latestVotes, total);
+        renderStats(latestVotes, latestClassrooms);
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const wrap = document.getElementById('summaryBanner');
+        const content = document.getElementById('summaryContent');
+        const btn = document.getElementById('btnTieBreaker');
+        
+        if (latestVotes.length === 0 || latestVotes[0].votes === 0) {
+            wrap.style.display = 'none';
+            return;
+        }
+
+        wrap.style.display = 'block';
+        const topVotes = latestVotes[0].votes;
+        const mathematicalTie = latestVotes.filter(p => p.votes === topVotes);
+
+        if (mathematicalTie.length > 1) {
+            if (forcedWinner && forcedWinnerVotes === topVotes && mathematicalTie.find(p => p.name === forcedWinner)) {
+                let winnerName = (partyConfig[forcedWinner] || {}).name || forcedWinner;
+                content.innerHTML = `🏁 ผู้ชนะจากการจับฉลากคือ <span class="highlight">${winnerName}</span> (คะแนน ${topVotes} เสียง)`;
+                btn.style.display = 'none';
+            } else {
+                let names = mathematicalTie.map(p => (partyConfig[p.name] || {}).name || p.name).join(' และ ');
+                content.innerHTML = `⚠️ ขณะนี้มีคะแนนนำเสมอกันที่ <span class="highlight">${topVotes}</span> เสียง ระหว่าง ${names}`;
+                btn.style.display = 'inline-block';
+                btn.onclick = () => window.openDrawModal(mathematicalTie, topVotes);
+            }
+        } else {
+            let winnerName = (partyConfig[latestVotes[0].name] || {}).name || latestVotes[0].name;
+            content.innerHTML = `🏆 ขณะนี้อันดับ 1 คือ <span class="highlight">${winnerName}</span> ด้วยคะแนน ${topVotes} เสียง`;
+            btn.style.display = 'none';
+        }
+    }
+
+    window.openDrawModal = function(tiedParties, topVotes) {
+        document.getElementById('drawModal').classList.add('show');
+        const animBox = document.getElementById('drawAnimation');
+        const resBox = document.getElementById('drawResult');
+        const btnClose = document.getElementById('btnCloseDraw');
+        
+        animBox.style.display = 'block'; resBox.style.display = 'none'; btnClose.style.display = 'none';
+        
+        let counter = 0;
+        let interval = setInterval(() => {
+            let pName = tiedParties[counter % tiedParties.length].name;
+            let p = partyConfig[pName] || { name: pName, color: '#fff' };
+            animBox.innerHTML = `<span style="color:${p.color}">${p.name}</span>`;
+            counter++;
+        }, 100);
+        
+        setTimeout(async () => {
+            clearInterval(interval);
+            let winner = tiedParties[Math.floor(Math.random() * tiedParties.length)];
+            let p = partyConfig[winner.name] || { name: winner.name, color: '#fff' };
+            animBox.style.display = 'none';
+            resBox.style.display = 'block';
+            resBox.innerHTML = `ผู้ชนะคือ <br><span style="color:${p.color}; font-size:1.4em">${p.name}</span> ✨`;
+            btnClose.style.display = 'inline-block';
+            
+            try {
+                await setDoc(doc(db, 'config', 'tieBreaker'), { winnerId: winner.name, votes: topVotes });
+            } catch(e) { console.error("Save tieBreaker failed", e); }
+        }, 3000);
+    }
+
+    // ===== LISTENERS =====
+    onSnapshot(doc(db, 'config', 'partyDetails'), (docSnap) => {
+        if (docSnap.exists() && docSnap.data().parties) {
+            partyConfig = docSnap.data().parties;
+            processAndRender();
+        }
+    });
+
+    onSnapshot(doc(db, 'config', 'tieBreaker'), (docSnap) => {
+        if (docSnap.exists()) {
+            forcedWinner = docSnap.data().winnerId;
+            forcedWinnerVotes = docSnap.data().votes;
+        } else {
+            forcedWinner = null;
+            forcedWinnerVotes = 0;
+        }
+        processAndRender();
+    });
+
+    onSnapshot(collection(db, 'votes'), (snapshot) => {
+        globalTally = {};
+        snapshot.forEach(docSnap => {
+            const party = docSnap.data().party;
+            if (party) globalTally[party] = (globalTally[party] || 0) + 1;
+        });
+        processAndRender();
+    }, (err) => {
+        console.error('votes snapshot error:', err);
+        document.getElementById('lastUpdate').textContent = '⚠️ ไม่สามารถเชื่อมต่อ Firebase ได้';
+    });
+
+    // ===== LISTEN CLASSROOMS (real-time) =====
+    onSnapshot(collection(db, 'classrooms'), (snapshot) => {
+        const arr = [];
+        snapshot.forEach(docSnap => {
+            arr.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        latestClassrooms = sortClassrooms(arr);
+        renderClassrooms(latestClassrooms);
+        renderStats(latestVotes, latestClassrooms);
+    }, (err) => {
+        console.error('classrooms snapshot error:', err);
+    });
+</script>
+</body>
+</html>

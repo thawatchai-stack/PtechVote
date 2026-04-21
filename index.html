@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P.TECH Vote 69</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ===== VOTE CONTAINER (narrow) ===== */
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transition: max-width 0.4s ease;
+        }
+
+        /* ===== ADMIN CONTAINER (wide) ===== */
+        .container.admin-mode {
+            max-width: 1100px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        /* ===== STEP INDICATOR ===== */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .step-divider {
+            width: 40px;
+            height: 2px;
+            background: #e0e0e0;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            padding: 30px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Sarabun', sans-serif;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* ===== PARTY GRID ===== */
+        .party-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .party-card {
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .party-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .party-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .party-icon {
+            width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; border-radius: 50%; overflow: hidden; background: #f9f9f9;
+        }
+        .party-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+        .party-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 600;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(238, 90, 36, 0.35);
+        }
+
+        /* ===== ADMIN PANEL ===== */
+        .admin-panel {
+            display: none;
+            padding: 30px;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .admin-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-title h2 {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: 700;
+        }
+
+        /* ===== SUMMARY CARDS ===== */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 28px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 14px;
+            padding: 18px 20px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(102,126,234,0.3);
+        }
+
+        .summary-card.green {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            box-shadow: 0 6px 20px rgba(17,153,142,0.3);
+        }
+
+        .summary-card.orange {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            box-shadow: 0 6px 20px rgba(247,151,30,0.3);
+        }
+
+        .summary-card.red {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 6px 20px rgba(238,90,36,0.3);
+        }
+
+        .summary-value {
+            font-size: 2em;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .summary-label {
+            font-size: 0.82em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* ===== RESULTS LINK BUTTON ===== */
+        .btn-results {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 22px;
+            font-size: 1em;
+            font-weight: 700;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(15,52,96,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-results:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(15,52,96,0.5);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .btn-results .results-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        .btn-results .results-text {
+            text-align: left;
+        }
+
+        .btn-results .results-text .results-title {
+            font-size: 1em;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .btn-results .results-text .results-sub {
+            font-size: 0.78em;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        .btn-results .results-arrow {
+            margin-left: auto;
+            font-size: 1.2em;
+            opacity: 0.6;
+        }
+
+        /* ===== CLASSROOM GRID DASHBOARD ===== */
+        .section-title {
+            font-size: 1em;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .classroom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* Group header (ปวช / ปวส) */
+        .group-header {
+            grid-column: 1 / -1;
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 6px 0 4px;
+            border-bottom: 2px solid #667eea30;
+        }
+
+        .classroom-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+
+        .classroom-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+        }
+
+        /* Color-coded border by completion */
+        .classroom-card.done-low    { border-color: #fc5c7d; }
+        .classroom-card.done-mid    { border-color: #f7971e; }
+        .classroom-card.done-high   { border-color: #11998e; }
+        .classroom-card.done-full   { border-color: #38ef7d; background: #f0fff7; }
+
+        .cc-room-name {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .cc-count {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .cc-total {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .cc-pct {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 0.78em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .classroom-card.done-full .cc-pct {
+            background: #d4f5e5;
+            color: #0a6640;
+        }
+
+        /* Mini progress bar inside card */
+        .cc-bar {
+            width: 100%;
+            height: 5px;
+            background: #eee;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .cc-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .done-low  .cc-bar-fill { background: linear-gradient(90deg, #fc5c7d, #ff9a9e); }
+        .done-mid  .cc-bar-fill { background: linear-gradient(90deg, #f7971e, #ffd200); }
+        .done-high .cc-bar-fill { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .done-full .cc-bar-fill { background: linear-gradient(90deg, #11998e, #38ef7d); }
+
+        /* Delete & Edit buttons on card */
+        .cc-actions {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        .cc-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #ccc;
+            line-height: 1;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .cc-action-btn:hover { background: #f0f0f0; }
+        .cc-action-btn.edit:hover { color: #4f46e5; }
+        .cc-action-btn.del:hover { color: #e53935; }
+
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            color: #aaa;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 12px;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 0.95em;
+        }
+
+        /* ===== REFRESH BUTTON ===== */
+        .btn-refresh {
+            background: #eef0ff;
+            color: #667eea;
+            border: 2px solid #667eea30;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            font-weight: 600;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn-refresh:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.5em; }
+            .party-grid { grid-template-columns: repeat(2, 1fr); }
+            .content, .admin-panel { padding: 20px; }
+            .classroom-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+            .summary-row { grid-template-columns: repeat(2, 1fr); }
+            .admin-input { flex-direction: column; }
+            .admin-input .btn { width: 100%; }
+        }
+
+        /* ===== CONFIRM MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 22px;
+            padding: 32px 28px 24px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+            transform: scale(0.88) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-icon-ring {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border: 3px solid #667eea30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            margin: 0 auto 16px;
+        }
+
+        .modal-question {
+            font-size: 1em;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .modal-party-name {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-confirm-text {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 24px;
+        }
+
+        .modal-divider {
+            height: 1px;
+            background: #f0f0f0;
+            margin-bottom: 20px;
+        }
+
+        .modal-btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            padding: 13px 10px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8e8;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 6px 18px rgba(102,126,234,0.35);
+        }
+
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(102,126,234,0.5);
+        }
+
+        .modal-btn-confirm:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-wrap {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1e2535;
+            color: #f1f5f9;
+            border-radius: 14px;
+            padding: 13px 20px;
+            font-size: 0.95em;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            min-width: 240px;
+            max-width: 340px;
+            pointer-events: all;
+            opacity: 0;
+            transform: translateY(-18px) scale(0.95);
+            transition: all 0.35s cubic-bezier(0.34,1.4,0.64,1);
+            border-left: 4px solid #667eea;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .toast.success { border-left-color: #22c55e; }
+        .toast.error   { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
+        .toast.info    { border-left-color: #667eea; }
+
+        .toast-icon { font-size: 1.2em; flex-shrink: 0; }
+        .toast-msg  { flex: 1; line-height: 1.4; }
+
+        /* ===== PASSWORD MODAL ===== */
+        .pwd-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+
+        .pwd-modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .pwd-modal-box {
+            background: white;
+            border-radius: 22px;
+            padding: 32px 28px 24px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            transform: scale(0.88) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .pwd-modal-overlay.show .pwd-modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .pwd-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .pwd-title {
+            font-size: 1.2em;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .pwd-sub {
+            font-size: 0.88em;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .pwd-input {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: 'Sarabun', sans-serif;
+            text-align: center;
+            letter-spacing: 4px;
+            transition: all 0.3s;
+            margin-bottom: 6px;
+        }
+
+        .pwd-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+        }
+
+        .pwd-error {
+            font-size: 0.83em;
+            color: #ef4444;
+            min-height: 20px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .pwd-modal-divider { height: 1px; background: #f0f0f0; margin-bottom: 18px; }
+
+        .pwd-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ===== DELETE CONFIRM MODAL ===== */
+        .del-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9997;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+
+        .del-modal-overlay.show { opacity: 1; pointer-events: all; }
+
+        .del-modal-box {
+            background: white;
+            border-radius: 22px;
+            padding: 32px 28px 24px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            transform: scale(0.88) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .del-modal-overlay.show .del-modal-box { transform: scale(1) translateY(0); }
+
+        .del-icon { font-size: 2.5em; margin-bottom: 12px; }
+
+        .del-title {
+            font-size: 1.1em;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .del-room-name {
+            display: inline-block;
+            background: #fef2f2;
+            color: #ef4444;
+            border-radius: 8px;
+            padding: 4px 14px;
+            font-weight: 700;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .del-sub {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 22px;
+        }
+
+        .del-modal-divider { height: 1px; background: #f0f0f0; margin-bottom: 18px; }
+
+        .del-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .modal-btn-delete {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 6px 18px rgba(239,68,68,0.3);
+        }
+
+        .modal-btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(239,68,68,0.45);
+        }
+
+        /* ===== SUCCESS MODAL ===== */
+        .success-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(102,126,234,0.97) 0%, rgba(118,75,162,0.97) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99998;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .success-box {
+            background: white;
+            border-radius: 28px;
+            padding: 44px 32px 36px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.4);
+            transform: scale(0.8) translateY(40px);
+            transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .success-overlay.show .success-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            margin: 0 auto 20px;
+            box-shadow: 0 12px 32px rgba(17,153,142,0.4);
+            animation: successPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+        }
+
+        @keyframes successPop {
+            from { transform: scale(0) rotate(-180deg); }
+            to   { transform: scale(1) rotate(0deg); }
+        }
+
+        .success-title {
+            font-size: 1.6em;
+            font-weight: 800;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+
+        .success-sub {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 24px;
+        }
+
+        .success-party-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border: 2px solid #667eea30;
+            border-radius: 50px;
+            padding: 10px 22px;
+            font-size: 1.05em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 32px;
+        }
+
+        .success-party-badge .s-party-icon {
+            font-size: 1.4em;
+        }
+
+        .success-divider {
+            height: 1px;
+            background: #f0f0f0;
+            margin-bottom: 24px;
+        }
+
+        .success-note {
+            font-size: 0.82em;
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .btn-go-home {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05em;
+            font-weight: 700;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 24px rgba(102,126,234,0.4);
+            transition: all 0.25s;
+        }
+
+        .btn-go-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(102,126,234,0.5);
+        }
+        .party-settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .party-setting-item {
+            background: white; border: 2px solid #e9ecef; border-radius: 12px; padding: 12px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .party-setting-item input[type="file"] { display: none; }
+        .p-img-preview {
+            width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+            border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; background: #fafafa; flex-shrink: 0; overflow: hidden;
+        }
+        .p-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .party-setting-item input[type="text"] {
+            flex: 1; min-width: 120px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 0.95em;
+        }
+        .party-setting-item input[type="color"] {
+            -webkit-appearance: none; border: none; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; padding: 0; background: none; flex-shrink: 0;
+        }
+        .party-setting-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .party-setting-item input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+        .btn-delete-party {
+            background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex-shrink: 0; font-family: 'Sarabun', sans-serif;
+        }
+        .btn-delete-party:hover { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- ===== CONFIRM MODAL (party) ===== -->
+    <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-icon-ring" id="modalPartyIcon">🗳️</div>
+            <div class="modal-question">คุณต้องการเลือก</div>
+            <div class="modal-party-name" id="modalPartyName">—</div>
+            <div class="modal-confirm-text">ใช่หรือไม่? ยืนยันแล้วจะไม่สามารถเปลี่ยนแปลงได้</div>
+            <div class="modal-divider"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="modalCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-confirm" id="modalConfirm">✅ ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PASSWORD MODAL ===== -->
+    <div class="pwd-modal-overlay" id="pwdModal" role="dialog" aria-modal="true">
+        <div class="pwd-modal-box">
+            <div class="pwd-icon">🔐</div>
+            <div class="pwd-title">เข้าสู่ระบบ Admin</div>
+            <div class="pwd-sub">กรุณากรอกรหัสผ่านเพื่อดำเนินการต่อ</div>
+            <input type="password" class="pwd-input" id="pwdInput" placeholder="••••••" autocomplete="current-password">
+            <div class="pwd-error" id="pwdError"></div>
+            <div class="pwd-modal-divider"></div>
+            <div class="pwd-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="pwdCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-confirm" id="pwdSubmit">🔓 เข้าสู่ระบบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DELETE CONFIRM MODAL ===== -->
+    <div class="del-modal-overlay" id="delModal" role="dialog" aria-modal="true">
+        <div class="del-modal-box">
+            <div class="del-icon">🗑️</div>
+            <div class="del-title">ลบห้องเรียนนี้?</div>
+            <div class="del-room-name" id="delRoomName">—</div>
+            <div class="del-sub">ข้อมูลการโหวตจะยังคงอยู่ในระบบ<br>แต่ห้องนี้จะถูกลบออกจากแดชบอร์ด</div>
+            <div class="del-modal-divider"></div>
+            <div class="del-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="delCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-delete" id="delConfirm">🗑️ ลบออก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EDIT TOTAL STUDENTS MODAL ===== -->
+    <div class="del-modal-overlay" id="editModal" role="dialog" aria-modal="true">
+        <div class="del-modal-box">
+            <div class="del-icon">✏️</div>
+            <div class="del-title">แก้ไขจำนวนนักเรียน</div>
+            <div class="del-room-name" id="editRoomName" style="background:#eef2ff; color:#4f46e5;">—</div>
+            <div style="margin-bottom: 20px;">
+                <input type="number" id="editTotalInput" class="pwd-input" placeholder="ใส่จำนวนนักเรียนทั้งหมด" min="0">
+            </div>
+            <div class="del-modal-divider"></div>
+            <div class="del-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="editCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-confirm" id="editConfirm">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CLEAR ALL DATA PWD MODAL ===== -->
+    <div class="pwd-modal-overlay" id="clearPwdModal" role="dialog" aria-modal="true">
+        <div class="pwd-modal-box">
+            <div class="pwd-icon">⚠️</div>
+            <div class="pwd-title" style="color: #ef4444;">ล้างข้อมูลทั้งหมด!</div>
+            <div class="pwd-sub">การลบข้อมูลทั้งหมดจะไม่สามารถกู้คืนได้<br>กรุณากรอกรหัสผ่าน Admin เพื่อยืนยัน</div>
+            <input type="password" class="pwd-input" id="clearPwdInput" placeholder="••••••" autocomplete="current-password">
+            <div class="pwd-error" id="clearPwdError"></div>
+            <div class="pwd-modal-divider"></div>
+            <div class="pwd-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="clearPwdCancel">← ยกเลิก</button>
+                <button class="modal-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 6px 18px rgba(239,68,68,0.3); border:none; border-radius:12px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer;" id="clearPwdSubmit">🗑️ ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SUCCESS MODAL ===== -->
+    <div class="success-overlay" id="successModal" role="dialog" aria-modal="true">
+        <div class="success-box">
+            <div class="success-checkmark">✅</div>
+            <div class="success-title">เลือกตั้งเสร็จสิ้น!</div>
+            <div class="success-sub">ขอบคุณที่ใช้สิทธิ์เลือกตั้งสภานักเรียน</div>
+            <div class="success-party-badge">
+                <span class="s-party-icon" id="successPartyIcon">🗳️</span>
+                <span id="successPartyName">—</span>
+            </div>
+            <div class="success-divider"></div>
+            <div class="success-note">คะแนนของคุณได้ถูกบันทึกเรียบร้อยแล้ว<br>คุณไม่สามารถเปลี่ยนแปลงคะแนนได้อีกครั้ง</div>
+            <button class="btn-go-home" id="successGoHome">🏠 กลับไปหน้าแรก</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <h1>🗳️ P.TECH Vote 69</h1>
+            <p>ระบบเลือกตั้งสภานักเรียน</p>
+        </div>
+
+        <div class="content" id="voteContent">
+            <!-- Step Indicator -->
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">ข้อมูลนักเรียน</div>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">เลือกพรรค</div>
+                </div>
+            </div>
+
+            <!-- Page 1: Student Information -->
+            <div id="page1" class="page active">
+                <div class="form-group">
+                    <label for="firstName">ชื่อ</label>
+                    <input type="text" id="firstName" placeholder="กรอกชื่อของคุณ">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">นามสกุล</label>
+                    <input type="text" id="lastName" placeholder="กรอกนามสกุลของคุณ">
+                </div>
+
+                <div class="form-group">
+                    <label for="level">ระดับชั้น</label>
+                    <select id="level">
+                        <option value="">-- เลือกระดับชั้น --</option>
+                        <option value="ปวช">ปวช.</option>
+                        <option value="ปวส">ปวส.</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="yearGroup" style="display: none;">
+                    <label for="year">ปีที่</label>
+                    <select id="year">
+                        <option value="">-- เลือกปีที่ --</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="roomGroup" style="display: none;">
+                    <label for="room">ห้อง</label>
+                    <select id="room">
+                        <option value="">-- เลือกห้อง --</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" id="nextToPage2">ถัดไป →</button>
+                <button class="btn btn-secondary" id="adminBtn">🔐 เข้าสู่ระบบ Admin</button>
+            </div>
+
+            <!-- Page 2: Party Selection -->
+            <div id="page2" class="page">
+                <div class="form-group">
+                    <label>เลือกพรรคที่คุณต้องการลงคะแนน</label>
+                    <div class="party-grid" id="partyGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" id="backToPage1" style="margin-top: 10px;">← ย้อนกลับ</button>
+                <button class="btn btn-primary" id="submitVote">✅ ยืนยันการลงคะแนน</button>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="admin-panel">
+            <!-- Admin Header -->
+            <div class="admin-header">
+                <div class="admin-title">
+                    <span style="font-size:1.5em">📊</span>
+                    <h2>แผงควบคุม Admin</h2>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-refresh" id="refreshStats">🔄 รีเฟรช</button>
+                    <button class="btn btn-danger" id="btnOpenClearData" style="width:auto; margin:0; padding:8px 16px; border-radius:10px; font-size:0.9em; font-weight:600; font-family:'Sarabun',sans-serif; border:none; cursor:pointer;">🗑️ ล้างข้อมูลทั้งหมด</button>
+                    <button class="btn btn-secondary" id="backToVoteTop" style="width:auto;padding:10px 20px;margin:0;">← ย้อนกลับ</button>
+                </div>
+            </div>
+
+            <!-- Summary Row -->
+            <div class="summary-row" id="summaryRow">
+                <div class="summary-card">
+                    <div class="summary-value" id="sumTotalRooms">—</div>
+                    <div class="summary-label">ห้องเรียนทั้งหมด</div>
+                </div>
+                <div class="summary-card green">
+                    <div class="summary-value" id="sumVoted">—</div>
+                    <div class="summary-label">โหวตแล้ว</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-value" id="sumTotal">—</div>
+                    <div class="summary-label">นักเรียนทั้งหมด</div>
+                </div>
+                <div class="summary-card red">
+                    <div class="summary-value" id="sumPct">—</div>
+                    <div class="summary-label">% ที่ใช้สิทธิ์</div>
+                </div>
+            </div>
+
+            <!-- Results Link -->
+            <a href="results.html" class="btn-results" id="goToResults">
+                <div class="results-icon">📊</div>
+                <div class="results-text">
+                    <div class="results-title">ผลการเลือกตั้ง</div>
+                    <div class="results-sub">ดูผลคะแนนแบบ Real-time</div>
+                </div>
+                <span class="results-arrow">→</span>
+            </a>
+
+            <!-- Party Settings Dashboard -->
+            <div class="section-title" style="margin-top: 25px;">🏷️ ตั้งค่าชื่อพรรค</div>
+            <div class="party-settings-grid" id="partySettingsGrid"></div>
+            <div style="display:flex; gap:10px; margin-bottom: 25px;">
+                <button class="btn btn-secondary" id="btnAddParty" style="margin-top:0;">➕ เพิ่มพรรค</button>
+                <button class="btn btn-primary" id="savePartyNames" style="margin-top:0;">💾 บันทึกการตั้งค่าพรรค</button>
+            </div>
+
+            <!-- Classroom Dashboard -->
+            <div class="section-title">🏫 สถิติรายห้อง</div>
+            <div id="classroomGrid" class="classroom-grid">
+                <div class="loading">กำลังโหลดข้อมูล...</div>
+            </div>
+
+            <button class="btn btn-secondary" id="backToVote" style="margin-top: 10px;">กลับไปหน้าลงคะแนน</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdfVLD3iFX38JIpnHsnjg0SHTpSjhD2LU",
+            authDomain: "ptechvote.firebaseapp.com",
+            projectId: "ptechvote",
+            storageBucket: "ptechvote.firebasestorage.app",
+            messagingSenderId: "977883969042",
+            appId: "1:977883969042:web:c3957d1ebfa26736e5cacb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let selectedParty = null;
+        let currentClassroom = null;
+        let currentPage = 1;
+
+        // ===== PAGE NAVIGATION =====
+        function showPage(pageNumber) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(`page${pageNumber}`).classList.add('active');
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.querySelector(`.step[data-step="${pageNumber}"]`).classList.add('active');
+            currentPage = pageNumber;
+        }
+
+        let adminEditingParties = {}; 
+
+        async function compressImage(file, maxSizeKB = 100) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 300;
+                        if (width > height && width > maxDim) {
+                            height *= maxDim / width; width = maxDim;
+                        } else if (height > maxDim) {
+                            width *= maxDim / height; height = maxDim;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadAdminPartySettings() {
+            adminEditingParties = JSON.parse(JSON.stringify(partyConfig));
+            renderAdminPartyGrid();
+        }
+
+        function renderAdminPartyGrid() {
+            const grid = document.getElementById('partySettingsGrid');
+            grid.innerHTML = '';
+            Object.values(adminEditingParties).forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'party-setting-item';
+                
+                let previewHtml = p.imageUrl 
+                    ? `<img src="${p.imageUrl}">` 
+                    : `<span>${p.icon || '🗳️'}</span>`;
+
+                item.innerHTML = `
+                    <label class="p-img-preview" title="คลิกเพื่ออัปโหลดรูป" style="color:${p.color}; border-color:${p.color};">
+                        ${previewHtml}
+                        <input type="file" accept="image/*" class="party-img-input" data-id="${p.id}">
+                    </label>
+                    <input type="color" value="${p.color || '#667eea'}" class="party-color-input" data-id="${p.id}" title="สีพรรค">
+                    <input type="text" value="${p.name}" class="party-name-input" data-id="${p.id}" placeholder="ชื่อพรรค">
+                    <button class="btn-delete-party" data-id="${p.id}" title="ลบพรรค">ลบ</button>
+                `;
+                grid.appendChild(item);
+            });
+            
+            grid.querySelectorAll('.party-name-input').forEach(input => {
+                input.addEventListener('input', (e) => { adminEditingParties[e.target.dataset.id].name = e.target.value; });
+            });
+            grid.querySelectorAll('.party-color-input').forEach(input => {
+                input.addEventListener('input', (e) => { 
+                    adminEditingParties[e.target.dataset.id].color = e.target.value; 
+                    e.target.previousElementSibling.style.borderColor = e.target.value;
+                    e.target.previousElementSibling.style.color = e.target.value;
+                });
+            });
+            grid.querySelectorAll('.party-img-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const base64 = await compressImage(file);
+                        adminEditingParties[e.target.dataset.id].imageUrl = base64;
+                        renderAdminPartyGrid();
+                    }
+                });
+            });
+            grid.querySelectorAll('.btn-delete-party').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (confirm(`คุณต้องการลบพรรค "${adminEditingParties[e.target.dataset.id].name}" ใช่หรือไม่?`)) {
+                        delete adminEditingParties[e.target.dataset.id];
+                        renderAdminPartyGrid();
+                    }
+                });
+            });
+        }
+
+        function showAdmin() {
+            document.getElementById('voteContent').style.display = 'none';
+            document.getElementById('adminPanel').classList.add('active');
+            document.getElementById('mainContainer').classList.add('admin-mode');
+            loadAdminStats();
+            loadAdminPartySettings();
+        }
+
+        function hideAdmin() {
+            document.getElementById('adminPanel').classList.remove('active');
+            document.getElementById('voteContent').style.display = 'block';
+            document.getElementById('mainContainer').classList.remove('admin-mode');
+            showPage(1);
+        }
+
+        // ===== CLASSROOM STRUCTURE =====
+        const classroomStructure = {
+            'ปวช': {
+                'ปีที่ 1': Array.from({length: 11}, (_, i) => `1/${i + 1}`),
+                'ปีที่ 2': Array.from({length: 10}, (_, i) => `2/${i + 1}`)
+            },
+            'ปวส': {
+                'ปีที่ 1': Array.from({length: 6}, (_, i) => `4/${i + 1}`),
+                'ปีที่ 2': Array.from({length: 6}, (_, i) => `5/${i + 1}`)
+            }
+        };
+
+        // ===== LEVEL CHANGE =====
+        document.getElementById('level').addEventListener('change', function() {
+            const level = this.value;
+            const yearGroup = document.getElementById('yearGroup');
+            const roomGroup = document.getElementById('roomGroup');
+            const yearSelect = document.getElementById('year');
+            const roomSelect = document.getElementById('room');
+
+            roomSelect.innerHTML = '<option value="">-- เลือกห้อง --</option>';
+            roomGroup.style.display = 'none';
+            currentClassroom = null;
+
+            if (level) {
+                yearGroup.style.display = 'block';
+                yearSelect.innerHTML = '<option value="">-- เลือกปีที่ --</option>';
+                Object.keys(classroomStructure[level]).forEach(y => {
+                    const option = document.createElement('option');
+                    option.value = y;
+                    option.textContent = y;
+                    yearSelect.appendChild(option);
+                });
+            } else {
+                yearGroup.style.display = 'none';
+            }
+        });
+
+        // ===== YEAR CHANGE =====
+        document.getElementById('year').addEventListener('change', function() {
+            const level = document.getElementById('level').value;
+            const year = this.value;
+            const roomGroup = document.getElementById('roomGroup');
+            const roomSelect = document.getElementById('room');
+
+            currentClassroom = null;
+
+            if (year) {
+                roomGroup.style.display = 'block';
+                roomSelect.innerHTML = '<option value="">-- เลือกห้อง --</option>';
+                classroomStructure[level][year].forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room;
+                    option.textContent = room;
+                    roomSelect.appendChild(option);
+                });
+            } else {
+                roomGroup.style.display = 'none';
+            }
+        });
+
+        // ===== ROOM CHANGE =====
+        document.getElementById('room').addEventListener('change', function() {
+            const level = document.getElementById('level').value;
+            const room = this.value;
+            currentClassroom = room ? `${level}.${room}` : null;
+        });
+
+        // ===== TOAST SYSTEM =====
+        function showToast(msg, type = 'info', duration = 3000) {
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const wrap = document.getElementById('toastWrap');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span class="toast-msg">${msg}</span>`;
+            wrap.appendChild(toast);
+            requestAnimationFrame(() => { requestAnimationFrame(() => { toast.classList.add('show'); }); });
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, duration);
+        }
+
+        // ===== PASSWORD MODAL =====
+        const pwdModal  = document.getElementById('pwdModal');
+        const pwdInput  = document.getElementById('pwdInput');
+        const pwdError  = document.getElementById('pwdError');
+        const pwdCancel = document.getElementById('pwdCancel');
+        const pwdSubmit = document.getElementById('pwdSubmit');
+
+        function openPwdModal() {
+            pwdInput.value = '';
+            pwdError.textContent = '';
+            pwdModal.classList.add('show');
+            setTimeout(() => pwdInput.focus(), 320);
+        }
+
+        function closePwdModal() {
+            pwdModal.classList.remove('show');
+            pwdInput.value = '';
+            pwdError.textContent = '';
+        }
+
+        pwdCancel.addEventListener('click', closePwdModal);
+        pwdModal.addEventListener('click', (e) => { if (e.target === pwdModal) closePwdModal(); });
+
+        function attemptAdminLogin() {
+            const pw = pwdInput.value;
+            if (pw === 'Jack2t') {
+                closePwdModal();
+                showAdmin();
+            } else {
+                pwdError.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                pwdInput.value = '';
+                pwdInput.focus();
+            }
+        }
+
+        pwdSubmit.addEventListener('click', attemptAdminLogin);
+        pwdInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptAdminLogin(); });
+
+        // ===== DELETE MODAL =====
+        const delModal   = document.getElementById('delModal');
+        const delRoomNameEl = document.getElementById('delRoomName');
+        const delCancel  = document.getElementById('delCancel');
+        const delConfirm = document.getElementById('delConfirm');
+        let pendingDeleteId = null;
+
+        function openDelModal(roomId) {
+            pendingDeleteId = roomId;
+            delRoomNameEl.textContent = roomId;
+            delModal.classList.add('show');
+        }
+
+        function closeDelModal() {
+            delModal.classList.remove('show');
+            pendingDeleteId = null;
+        }
+
+        delCancel.addEventListener('click', closeDelModal);
+        delModal.addEventListener('click', (e) => { if (e.target === delModal) closeDelModal(); });
+
+        delConfirm.addEventListener('click', async () => {
+            if (!pendingDeleteId) return;
+            const roomId = pendingDeleteId;
+            closeDelModal();
+            try {
+                const classroomDocId = roomId.replace(/\//g, '-');
+                await deleteDoc(doc(db, 'classrooms', classroomDocId));
+                showToast(`ลบห้อง ${roomId} เรียบร้อยแล้ว`, 'success');
+                loadAdminStats();
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        });
+
+        // ===== EDIT MODAL =====
+        const editModal = document.getElementById('editModal');
+        const editRoomNameEl = document.getElementById('editRoomName');
+        const editTotalInput = document.getElementById('editTotalInput');
+        const editCancel = document.getElementById('editCancel');
+        const editConfirm = document.getElementById('editConfirm');
+        let pendingEditId = null;
+
+        function openEditModal(roomId, currentTotal) {
+            pendingEditId = roomId;
+            editRoomNameEl.textContent = roomId;
+            editTotalInput.value = currentTotal || '';
+            editModal.classList.add('show');
+            setTimeout(() => editTotalInput.focus(), 320);
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove('show');
+            pendingEditId = null;
+        }
+
+        editCancel.addEventListener('click', closeEditModal);
+        editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
+
+        editConfirm.addEventListener('click', async () => {
+            if (!pendingEditId) return;
+            const newTotal = parseInt(editTotalInput.value, 10);
+            if (isNaN(newTotal) || newTotal < 0) {
+                showToast('กรุณาระบุตัวเลขที่ถูกต้อง', 'warning');
+                return;
+            }
+
+            editConfirm.disabled = true;
+            editConfirm.textContent = '⏳...';
+
+            try {
+                const classroomDocId = pendingEditId.replace(/\//g, '-');
+                await updateDoc(doc(db, 'classrooms', classroomDocId), { totalStudents: newTotal });
+                showToast(`อัปเดตจำนวนนักเรียนห้อง ${pendingEditId} แล้ว`, 'success');
+                loadAdminStats();
+                closeEditModal();
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            } finally {
+                editConfirm.disabled = false;
+                editConfirm.textContent = '💾 บันทึก';
+            }
+        });
+
+        // ===== CLEAR DATA MODAL =====
+        const clearPwdModal = document.getElementById('clearPwdModal');
+        const clearPwdInput = document.getElementById('clearPwdInput');
+        const clearPwdError = document.getElementById('clearPwdError');
+        const clearPwdCancel = document.getElementById('clearPwdCancel');
+        const clearPwdSubmit = document.getElementById('clearPwdSubmit');
+
+        document.getElementById('btnOpenClearData').addEventListener('click', () => {
+            clearPwdInput.value = '';
+            clearPwdError.textContent = '';
+            clearPwdModal.classList.add('show');
+            setTimeout(() => clearPwdInput.focus(), 320);
+        });
+
+        function closeClearPwdModal() {
+            clearPwdModal.classList.remove('show');
+        }
+
+        clearPwdCancel.addEventListener('click', closeClearPwdModal);
+
+        async function attemptClearData() {
+            if (clearPwdInput.value !== 'Jack2t') {
+                clearPwdError.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                clearPwdInput.value = '';
+                clearPwdInput.focus();
+                return;
+            }
+
+            clearPwdSubmit.disabled = true;
+            clearPwdSubmit.textContent = '⏳ กำลังลบ...';
+
+            try {
+                const votesSnap = await getDocs(collection(db, 'votes'));
+                const voteDeletions = votesSnap.docs.map(d => deleteDoc(doc(db, 'votes', d.id)));
+                
+                const clsSnap = await getDocs(collection(db, 'classrooms'));
+                const clsUpdates = clsSnap.docs.map(d => updateDoc(doc(db, 'classrooms', d.id), { votedCount: 0 }));
+
+                await Promise.all([...voteDeletions, ...clsUpdates]);
+
+                showToast('ลบข้อมูลการโหวตทั้งหมดเรียบร้อยแล้ว', 'success');
+                loadAdminStats();
+                closeClearPwdModal();
+            } catch (err) {
+                clearPwdError.textContent = '❌ เกิดข้อผิดพลาด: ' + err.message;
+            } finally {
+                clearPwdSubmit.disabled = false;
+                clearPwdSubmit.innerHTML = '🗑️ ยืนยัน';
+            }
+        }
+
+        clearPwdSubmit.addEventListener('click', attemptClearData);
+        clearPwdInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptClearData(); });
+
+        // ===== NEXT TO PAGE 2 =====
+        document.getElementById('nextToPage2').addEventListener('click', () => {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName  = document.getElementById('lastName').value.trim();
+            const level     = document.getElementById('level').value;
+            const year      = document.getElementById('year').value;
+            const room      = document.getElementById('room').value;
+
+            if (!firstName || !lastName) { showToast('กรุณากรอกชื่อ-นามสกุล', 'warning'); return; }
+            if (!level)                  { showToast('กรุณาเลือกระดับชั้น', 'warning'); return; }
+            if (!year)                   { showToast('กรุณาเลือกปีที่', 'warning'); return; }
+            if (!room)                   { showToast('กรุณาเลือกห้อง', 'warning'); return; }
+
+            showPage(2);
+        });
+
+        // ===== PARTY CONFIG =====
+        let partyConfig = {
+            'พรรค A': { id: 'พรรค A', name: 'พรรค A', icon: '🔴', color: '#f87171', imageUrl: '' },
+            'พรรค B': { id: 'พรรค B', name: 'พรรค B', icon: '🔵', color: '#60a5fa', imageUrl: '' },
+            'พรรค C': { id: 'พรรค C', name: 'พรรค C', icon: '🟢', color: '#4ade80', imageUrl: '' },
+            'พรรค D': { id: 'พรรค D', name: 'พรรค D', icon: '🟡', color: '#facc15', imageUrl: '' },
+            'พรรค E': { id: 'พรรค E', name: 'พรรค E', icon: '🟣', color: '#c084fc', imageUrl: '' },
+            'พรรค F': { id: 'พรรค F', name: 'พรรค F', icon: '🟠', color: '#fb923c', imageUrl: '' }
+        };
+
+        function renderPartyGrid() {
+            const grid = document.getElementById('partyGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            Object.values(partyConfig).forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'party-card';
+                card.dataset.party = p.id;
+                
+                let iconHtml = p.imageUrl 
+                    ? `<img src="${p.imageUrl}" alt="${p.name}">`
+                    : `<span>${p.icon || '🗳️'}</span>`;
+                    
+                card.innerHTML = `
+                    <div class="party-icon" style="color: ${p.color}; border: 2px solid ${p.color}33;">${iconHtml}</div>
+                    <div class="party-name">${p.name}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedParty = p.id;
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // ===== MODAL HELPERS =====
+        const modalOverlay  = document.getElementById('confirmModal');
+        const modalPartyIcon = document.getElementById('modalPartyIcon');
+        const modalPartyName = document.getElementById('modalPartyName');
+        const modalCancel   = document.getElementById('modalCancel');
+        const modalConfirm  = document.getElementById('modalConfirm');
+
+        // ===== BACK TO PAGE 1 =====
+        document.getElementById('backToPage1').addEventListener('click', () => showPage(1));
+
+        function openConfirmModal(partyId) {
+            const p = partyConfig[partyId];
+            if (p && p.imageUrl) {
+                modalPartyIcon.innerHTML = `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                modalPartyIcon.style.borderColor = p.color;
+            } else {
+                modalPartyIcon.innerHTML = p ? (p.icon || '🗳️') : '🗳️';
+                if(p) modalPartyIcon.style.borderColor = p.color;
+            }
+            modalPartyName.textContent = p ? p.name : partyId;
+            modalOverlay.classList.add('show');
+            modalConfirm.disabled = false;
+            modalConfirm.textContent = '✅ ยืนยัน';
+        }
+
+        function closeConfirmModal() {
+            modalOverlay.classList.remove('show');
+        }
+
+        // Close on backdrop click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeConfirmModal();
+        });
+
+        modalCancel.addEventListener('click', closeConfirmModal);
+
+        // ===== SUBMIT VOTE (step 1: validate → open modal) =====
+        document.getElementById('submitVote').addEventListener('click', () => {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName  = document.getElementById('lastName').value.trim();
+            const level     = document.getElementById('level').value;
+            const year      = document.getElementById('year').value;
+            const room      = document.getElementById('room').value;
+
+            if (!firstName || !lastName) { showToast('กรุณากรอกชื่อ-นามสกุล', 'warning'); return; }
+            if (!level)   { showToast('กรุณาเลือกระดับชั้น', 'warning'); return; }
+            if (!year)    { showToast('กรุณาเลือกปีที่', 'warning'); return; }
+            if (!room)    { showToast('กรุณาเลือกห้อง', 'warning'); return; }
+            if (!selectedParty) { showToast('กรุณาเลือกพรรค', 'warning'); return; }
+
+            // Show confirm modal
+            openConfirmModal(selectedParty);
+        });
+
+        // ===== MODAL CONFIRM (step 2: actually save vote) =====
+        modalConfirm.addEventListener('click', async () => {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName  = document.getElementById('lastName').value.trim();
+            const level     = document.getElementById('level').value;
+            const year      = document.getElementById('year').value;
+            const room      = document.getElementById('room').value;
+            const classroom = `${level}.${room}`;
+
+            // Disable confirm button while saving
+            modalConfirm.disabled = true;
+            modalConfirm.textContent = '⏳ กำลังบันทึก...';
+
+            try {
+                // Check duplicate vote
+                const votesRef = collection(db, 'votes');
+                const q = query(
+                    votesRef,
+                    where('classroom', '==', classroom),
+                    where('firstName', '==', firstName),
+                    where('lastName', '==', lastName)
+                );
+                const existingVotes = await getDocs(q);
+                if (!existingVotes.empty) {
+                    closeConfirmModal();
+                    showToast('คุณได้ทำการลงคะแนนแล้ว!', 'warning', 4000);
+                    return;
+                }
+
+                // Save vote
+                await addDoc(collection(db, 'votes'), {
+                    firstName, lastName, classroom, level, year, room,
+                    party: selectedParty,
+                    timestamp: new Date()
+                });
+
+                // Update classroom votedCount
+                // encode '/' → '-' in doc ID (Firestore disallows '/' in document IDs)
+                const classroomDocId = classroom.replace(/\//g, '-');
+                const classroomRef = doc(db, 'classrooms', classroomDocId);
+                const classroomDoc = await getDoc(classroomRef);
+
+                if (classroomDoc.exists()) {
+                    const currentVotes = classroomDoc.data().votedCount || 0;
+                    await updateDoc(classroomRef, { votedCount: currentVotes + 1 });
+                } else {
+                    await setDoc(classroomRef, {
+                        totalStudents: 0,
+                        votedCount: 1,
+                        level, year, room
+                    });
+                }
+
+                closeConfirmModal();
+                openSuccessModal(selectedParty);
+
+            } catch (error) {
+                console.error('Error submitting vote:', error);
+                closeConfirmModal();
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error', 5000);
+            }
+        });
+
+        // ===== ADMIN LOGIN =====
+        document.getElementById('adminBtn').addEventListener('click', () => {
+            openPwdModal();
+        });
+
+        document.getElementById('backToVote').addEventListener('click', hideAdmin);
+        document.getElementById('backToVoteTop').addEventListener('click', hideAdmin);
+        document.getElementById('refreshStats').addEventListener('click', loadAdminStats);
+
+        // ===== SUCCESS MODAL =====
+        const successModal      = document.getElementById('successModal');
+        const successGoHome     = document.getElementById('successGoHome');
+        const successPartyIcon  = document.getElementById('successPartyIcon');
+        const successPartyName  = document.getElementById('successPartyName');
+
+        function openSuccessModal(partyId) {
+            const p = partyConfig[partyId];
+            if (p && p.imageUrl) {
+                successPartyIcon.innerHTML = `<img src="${p.imageUrl}" style="width:28px;height:28px;object-fit:cover;border-radius:50%;display:inline-block;">`;
+            } else {
+                successPartyIcon.innerHTML = p ? (p.icon || '🗳️') : '🗳️';
+            }
+            successPartyName.textContent = p ? p.name : partyId;
+            successModal.classList.add('show');
+        }
+
+        function closeSuccessModal() {
+            successModal.classList.remove('show');
+            // Reset form
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('level').value = '';
+            document.getElementById('year').innerHTML = '<option value="">-- เลือกปีที่ --</option>';
+            document.getElementById('room').innerHTML = '<option value="">-- เลือกห้อง --</option>';
+            document.getElementById('yearGroup').style.display = 'none';
+            document.getElementById('roomGroup').style.display = 'none';
+            document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
+            selectedParty = null;
+            currentClassroom = null;
+            showPage(1);
+        }
+
+        successGoHome.addEventListener('click', closeSuccessModal);
+
+        // ===== LOAD ADMIN STATS =====
+        async function loadAdminStats() {
+            const grid = document.getElementById('classroomGrid');
+            grid.innerHTML = '<div class="loading">⏳ กำลังโหลดข้อมูล...</div>';
+
+            // Reset summary
+            ['sumTotalRooms','sumVoted','sumTotal','sumPct'].forEach(id => {
+                document.getElementById(id).textContent = '—';
+            });
+
+            try {
+                const querySnapshot = await getDocs(collection(db, 'classrooms'));
+
+                if (querySnapshot.empty) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏫</div>
+                            <div>ยังไม่มีข้อมูลห้องเรียน</div>
+                            <div style="font-size:0.85em;margin-top:6px;color:#bbb;">กรุณาเพิ่มห้องเรียนด้านบน</div>
+                        </div>`;
+                    return;
+                }
+
+                // Collect and sort
+                const classrooms = [];
+                querySnapshot.forEach(docSnap => {
+                    classrooms.push({ id: docSnap.id, data: docSnap.data() });
+                });
+
+                classrooms.sort((a, b) => {
+                    const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+                    const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+                    if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
+                    if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
+                    if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
+                    return parseInt(aM[3]) - parseInt(bM[3]);
+                });
+
+                // Compute summary
+                let totalVoted = 0, totalStudents = 0;
+                classrooms.forEach(c => {
+                    totalVoted    += c.data.votedCount    || 0;
+                    totalStudents += c.data.totalStudents || 0;
+                });
+                const overallPct = totalStudents > 0
+                    ? ((totalVoted / totalStudents) * 100).toFixed(1)
+                    : '—';
+
+                document.getElementById('sumTotalRooms').textContent = classrooms.length;
+                document.getElementById('sumVoted').textContent      = totalVoted;
+                document.getElementById('sumTotal').textContent      = totalStudents;
+                document.getElementById('sumPct').textContent        = totalStudents > 0 ? `${overallPct}%` : '—';
+
+                // Build grid
+                grid.innerHTML = '';
+                let lastGroup = null;
+
+                classrooms.forEach(classroom => {
+                    const data     = classroom.data;
+                    const voted    = data.votedCount    || 0;
+                    const total    = data.totalStudents || 0;
+                    const pct      = total > 0 ? (voted / total * 100) : 0;
+                    const pctText  = total > 0 ? `${pct.toFixed(1)}%` : 'ไม่ระบุจำนวน';
+
+                    // Determine color class
+                    let colorClass = 'done-low';
+                    if (pct >= 100)      colorClass = 'done-full';
+                    else if (pct >= 60)  colorClass = 'done-high';
+                    else if (pct >= 30)  colorClass = 'done-mid';
+
+                    // Extract group (ปวช / ปวส)
+                    const groupMatch = classroom.id.match(/^(ปวช|ปวส)/);
+                    const group = groupMatch ? groupMatch[1] : '';
+
+                    if (group && group !== lastGroup) {
+                        const gh = document.createElement('div');
+                        gh.className = 'group-header';
+                        gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
+                        grid.appendChild(gh);
+                        lastGroup = group;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = `classroom-card ${colorClass}`;
+                    card.innerHTML = `
+                        <div class="cc-actions">
+                            <button class="cc-action-btn edit cc-edit" title="แก้ไขจำนวน" data-id="${classroom.id}" data-total="${total}">✏️</button>
+                            <button class="cc-action-btn del cc-delete" title="ลบห้องเรียน" data-id="${classroom.id}">✕</button>
+                        </div>
+                        <div class="cc-room-name">${classroom.id}</div>
+                        <div class="cc-count">${voted}</div>
+                        <div class="cc-total">จาก ${total > 0 ? total : '?'} คน</div>
+                        <span class="cc-pct">${pctText}</span>
+                        <div class="cc-bar">
+                            <div class="cc-bar-fill" style="width: ${Math.min(pct, 100)}%"></div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // Classroom action buttons
+                grid.querySelectorAll('.cc-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openDelModal(btn.dataset.id);
+                    });
+                });
+                grid.querySelectorAll('.cc-edit').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openEditModal(btn.dataset.id, btn.dataset.total);
+                    });
+                });
+
+            } catch (error) {
+                grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div>เกิดข้อผิดพลาดในการโหลดข้อมูล</div><div style="font-size:0.8em;color:#bbb;margin-top:4px;">${error.message}</div></div>`;
+                console.error('loadAdminStats error:', error);
+            }
+        }
+
+        document.getElementById('btnAddParty').addEventListener('click', () => {
+            const newId = 'party_' + Date.now();
+            adminEditingParties[newId] = {
+                id: newId, name: 'พรรคใหม่', icon: '❔', color: '#667eea', imageUrl: ''
+            };
+            renderAdminPartyGrid();
+        });
+
+        document.getElementById('savePartyNames').addEventListener('click', async () => {
+            const btn = document.getElementById('savePartyNames');
+            btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+            try {
+                await setDoc(doc(db, 'config', 'partyDetails'), { parties: adminEditingParties });
+                showToast('บันทึกการตั้งค่าพรรคเรียบร้อย', 'success');
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '💾 บันทึกการตั้งค่าพรรค';
+            }
+        });
+
+        console.log('P.TECH Vote 69 initialized');
+        renderPartyGrid(); // Initial
+
+        onSnapshot(doc(db, 'config', 'partyDetails'), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().parties) {
+                partyConfig = docSnap.data().parties;
+            }
+            renderPartyGrid();
+            if (document.getElementById('adminPanel').classList.contains('active')) {
+                loadAdminPartySettings();
+            }
+        });
+
+        if (new URLSearchParams(window.location.search).get('admin') === 'true') {
+            openPwdModal();
+        }
+    </script>
+</body>
+</html>
