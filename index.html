@@ -1913,8 +1913,8 @@
                 });
 
                 classrooms.sort((a, b) => {
-                    const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
-                    const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+                    const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+                    const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
                     if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
                     if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
                     if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
@@ -1938,7 +1938,10 @@
 
                 // Build grid
                 grid.innerHTML = '';
+                grid.style.display = 'block'; // Override grid-template-columns so rows take full width
                 let lastGroup = null;
+                let lastYear = null;
+                let currentYearContainer = null;
 
                 classrooms.forEach(classroom => {
                     const data     = classroom.data;
@@ -1953,9 +1956,10 @@
                     else if (pct >= 60)  colorClass = 'done-high';
                     else if (pct >= 30)  colorClass = 'done-mid';
 
-                    // Extract group (ปวช / ปวส)
-                    const groupMatch = classroom.id.match(/^(ปวช|ปวส)/);
-                    const group = groupMatch ? groupMatch[1] : '';
+                    // Extract group (ปวช / ปวส) and Year
+                    const yearMatch = classroom.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
+                    const group = yearMatch ? yearMatch[1] : '';
+                    const year = yearMatch ? yearMatch[2] : '';
 
                     if (group && group !== lastGroup) {
                         const gh = document.createElement('div');
@@ -1963,6 +1967,29 @@
                         gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
                         grid.appendChild(gh);
                         lastGroup = group;
+                        lastYear = null; // Reset year group when group changes
+                    }
+
+                    if (year && year !== lastYear) {
+                        const yRow = document.createElement('div');
+                        yRow.className = 'year-row';
+                        yRow.style.cssText = 'display: flex; gap: 15px; margin-bottom: 12px; margin-top: 10px; width: 100%;';
+                        
+                        const yLabel = document.createElement('div');
+                        yLabel.className = 'year-label';
+                        yLabel.style.cssText = 'flex-shrink: 0; width: 44px; height: 50px; background: white; border: 2px solid #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.8em; color: #ef4444; margin-top: 5px;';
+                        yLabel.textContent = year;
+
+                        const yCards = document.createElement('div');
+                        yCards.className = 'year-cards';
+                        yCards.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; flex: 1;';
+                        
+                        yRow.appendChild(yLabel);
+                        yRow.appendChild(yCards);
+                        grid.appendChild(yRow);
+
+                        currentYearContainer = yCards;
+                        lastYear = year;
                     }
 
                     const card = document.createElement('div');
@@ -1980,7 +2007,14 @@
                             <div class="cc-bar-fill" style="width: ${Math.min(pct, 100)}%"></div>
                         </div>
                     `;
-                    grid.appendChild(card);
+                    
+                    if (currentYearContainer) {
+                        currentYearContainer.appendChild(card);
+                    } else {
+                        // Fallback if parsing fails (no year found)
+                        card.style.cssText = 'display: inline-block; width: 130px; margin: 0 15px 15px 0; vertical-align: top;';
+                        grid.appendChild(card);
+                    }
                 });
 
                 // Classroom action buttons

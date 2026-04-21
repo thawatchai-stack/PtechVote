@@ -962,17 +962,54 @@
     function renderClassrooms(classrooms) {
         const list = document.getElementById('classroomList');
         list.innerHTML = '';
+        list.style.display = 'block';
 
         if (classrooms.length === 0) {
             list.innerHTML = '<div class="no-data" style="grid-column:1/-1">ยังไม่มีข้อมูลห้องเรียน</div>';
             return;
         }
 
+        let lastGroup = null;
+        let lastYear = null;
+        let currentYearContainer = null;
+
         classrooms.forEach(c => {
             const voted = c.votedCount    || 0;
             const total = c.totalStudents || 0;
             const pct   = total > 0 ? (voted / total * 100) : 0;
             const full  = pct >= 100;
+
+            const yearMatch = c.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
+            const group = yearMatch ? yearMatch[1] : '';
+            const year = yearMatch ? yearMatch[2] : '';
+
+            if (group && group !== lastGroup) {
+                const gh = document.createElement('div');
+                gh.style.cssText = 'grid-column: 1 / -1; font-size: 1.1em; font-weight: 700; color: var(--accent); margin-top: 15px; padding-bottom: 6px; border-bottom: 2px solid rgba(255,255,255,0.05);';
+                gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
+                list.appendChild(gh);
+                lastGroup = group;
+                lastYear = null;
+            }
+
+            if (year && year !== lastYear) {
+                const yRow = document.createElement('div');
+                yRow.style.cssText = 'display: flex; gap: 15px; margin-bottom: 12px; margin-top: 10px; width: 100%;';
+                
+                const yLabel = document.createElement('div');
+                yLabel.style.cssText = 'flex-shrink: 0; width: 44px; height: 50px; background: rgba(255,255,255,0.05); border: 2px solid var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.8em; color: var(--accent); margin-top: 5px;';
+                yLabel.textContent = year;
+
+                const yCards = document.createElement('div');
+                yCards.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; flex: 1;';
+                
+                yRow.appendChild(yLabel);
+                yRow.appendChild(yCards);
+                list.appendChild(yRow);
+
+                currentYearContainer = yCards;
+                lastYear = year;
+            }
 
             const card = document.createElement('div');
             card.className = 'cls-card';
@@ -986,15 +1023,21 @@
                 </div>
                 <div class="cls-pct">${total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน'}</div>
             `;
-            list.appendChild(card);
+            
+            if (currentYearContainer) {
+                currentYearContainer.appendChild(card);
+            } else {
+                card.style.cssText = 'display: inline-block; width: 220px; margin: 0 12px 12px 0; vertical-align: top;';
+                list.appendChild(card);
+            }
         });
     }
 
     // ===== SORT CLASSROOMS =====
     function sortClassrooms(arr) {
         return arr.sort((a, b) => {
-            const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
-            const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)\/(\d+)$/);
+            const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+            const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
             if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
             if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
             if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
