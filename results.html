@@ -1155,10 +1155,15 @@
     });
 
     onSnapshot(collection(db, 'votes'), (snapshot) => {
-        globalTally = {};
-        snapshot.forEach(docSnap => {
-            const party = docSnap.data().party;
-            if (party) globalTally[party] = (globalTally[party] || 0) + 1;
+        snapshot.docChanges().forEach((change) => {
+            const party = change.doc.data().party;
+            if (!party) return;
+            
+            if (change.type === "added") {
+                globalTally[party] = (globalTally[party] || 0) + 1;
+            } else if (change.type === "removed") {
+                globalTally[party] = Math.max(0, (globalTally[party] || 0) - 1);
+            }
         });
         processAndRender();
     }, (err) => {

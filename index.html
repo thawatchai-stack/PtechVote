@@ -1282,6 +1282,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAdfVLD3iFX38JIpnHsnjg0SHTpSjhD2LU",
@@ -1294,10 +1295,88 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         let selectedParty = null;
         let currentClassroom = null;
         let currentPage = 1;
+
+        let currentUserId = null;
+        let lastVoteTime = 0;
+
+        // ===== LOADING & AUTH STATE =====
+        function showLoading() {
+            let loader = document.getElementById('mainLoader');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'mainLoader';
+                loader.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                                background: rgba(0,0,0,0.5); display: flex; 
+                                justify-content: center; align-items: center; z-index: 999999; backdrop-filter: blur(3px);">
+                        <div style="background: white; padding: 25px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;">
+                            <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                            <p style="font-family: 'Sarabun', sans-serif; font-weight: 600; color: #333; margin: 0;">กำลังโหลดระบบ...</p>
+                        </div>
+                    </div>
+                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                `;
+                document.body.appendChild(loader);
+            }
+        }
+
+        function hideLoading() {
+            const loader = document.getElementById('mainLoader');
+            if (loader) loader.remove();
+        }
+
+        async function checkUserVoteStatus() {
+            if (!currentUserId) return;
+            try {
+                const userVoteSnap = await getDoc(doc(db, 'userVotes', currentUserId));
+                if (userVoteSnap.exists()) {
+                    disableVotingButtons();
+                }
+            } catch (error) {
+                console.error("Error checking vote status:", error);
+            }
+        }
+
+        function disableVotingButtons() {
+            const btnSubmit = document.getElementById('submitVote');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = 'โหวตแล้ว ✓';
+                btnSubmit.classList.add('btn-secondary');
+                btnSubmit.classList.remove('btn-primary');
+                btnSubmit.style.opacity = '0.5';
+                btnSubmit.style.cursor = 'not-allowed';
+            }
+            const btnNext = document.getElementById('nextToPage2');
+            if (btnNext) {
+                btnNext.disabled = true;
+                btnNext.textContent = 'โหวตแล้ว ✓';
+                btnNext.classList.add('btn-secondary');
+                btnNext.classList.remove('btn-primary');
+                btnNext.style.opacity = '0.5';
+                btnNext.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Initialize Anonymous Auth
+        showLoading();
+        signInAnonymously(auth)
+            .then((userCredential) => {
+                currentUserId = userCredential.user.uid;
+                console.log("User ID:", currentUserId);
+                checkUserVoteStatus();
+                hideLoading();
+            })
+            .catch((error) => {
+                console.error("Auth Error:", error);
+                hideLoading();
+                showToast("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง", 'error', 5000);
+            });
 
         // ===== PAGE NAVIGATION =====
         function showPage(pageNumber) {
@@ -1671,6 +1750,11 @@
 
         // ===== NEXT TO PAGE 2 =====
         document.getElementById('nextToPage2').addEventListener('click', () => {
+            if (!currentUserId) {
+                showToast('กรุณารอสักครู่ กำลังเชื่อมต่อระบบ...', 'warning');
+                return;
+            }
+
             const firstName = document.getElementById('firstName').value.trim();
             const lastName  = document.getElementById('lastName').value.trim();
             const level     = document.getElementById('level').value;
@@ -1760,6 +1844,18 @@
 
         // ===== SUBMIT VOTE (step 1: validate → open modal) =====
         document.getElementById('submitVote').addEventListener('click', () => {
+            if (!currentUserId) {
+                showToast('กรุณารอสักครู่ กำลังเชื่อมต่อระบบ...', 'warning');
+                return;
+            }
+
+            // ตรวจสอบ Rate Limiting (ห้ามกดโหวตเร็วเกิน 3 วินาที)
+            const now = Date.now();
+            if (now - lastVoteTime < 3000) {
+                showToast('กรุณารอ 3 วินาทีก่อนโหวตอีกครั้ง', 'warning');
+                return;
+            }
+
             const firstName = document.getElementById('firstName').value.trim();
             const lastName  = document.getElementById('lastName').value.trim();
             const level     = document.getElementById('level').value;
@@ -1778,6 +1874,14 @@
 
         // ===== MODAL CONFIRM (step 2: actually save vote) =====
         modalConfirm.addEventListener('click', async () => {
+            const now = Date.now();
+            if (now - lastVoteTime < 3000) {
+                showToast('กรุณารอ 3 วินาทีก่อนโหวตอีกครั้ง', 'warning');
+                closeConfirmModal();
+                return;
+            }
+            lastVoteTime = now;
+
             const firstName = document.getElementById('firstName').value.trim();
             const lastName  = document.getElementById('lastName').value.trim();
             const level     = document.getElementById('level').value;
@@ -1790,6 +1894,17 @@
             modalConfirm.textContent = '⏳ กำลังบันทึก...';
 
             try {
+                // ตรวจสอบสถานะการโหวตด้วย currentUserId ก่อน
+                const userVoteRef = doc(db, 'userVotes', currentUserId);
+                const userVoteSnap = await getDoc(userVoteRef);
+                if (userVoteSnap.exists()) {
+                    closeConfirmModal();
+                    showToast('คุณได้ลงคะแนนด้วยอุปกรณ์นี้ไปแล้ว!', 'warning', 4000);
+                    disableVotingButtons();
+                    modalConfirm.disabled = false;
+                    modalConfirm.textContent = '✅ ยืนยัน';
+                    return;
+                }
                 // Check duplicate vote
                 const votesRef = collection(db, 'votes');
                 const q = query(
@@ -1810,6 +1925,13 @@
                     firstName, lastName, classroom, level, year, room,
                     party: selectedParty,
                     timestamp: new Date()
+                });
+
+                // บันทึกสถานะว่าโหวตแล้วสำหรับ userId นี้
+                await setDoc(userVoteRef, {
+                    timestamp: new Date(),
+                    party: selectedParty,
+                    classroom: classroom
                 });
 
                 // Update classroom votedCount
