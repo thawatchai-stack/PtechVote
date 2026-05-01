@@ -1011,17 +1011,19 @@
                 lastYear = year;
             }
 
+            const cardId = `cls-card-${c.id.replace(/[\/\.]/g, '-')}`;
             const card = document.createElement('div');
             card.className = 'cls-card';
+            card.id = cardId;
             card.innerHTML = `
                 <div class="cls-top">
                     <div class="cls-name">${c.id}</div>
-                    <div class="cls-count">${voted}/${total > 0 ? total : '?'}</div>
+                    <div class="cls-count" id="count-${cardId}">${voted}/${total > 0 ? total : '?'}</div>
                 </div>
                 <div class="cls-bar">
-                    <div class="cls-fill ${full ? 'full' : ''}" style="width:${Math.min(pct, 100)}%"></div>
+                    <div class="cls-fill ${full ? 'full' : ''}" id="fill-${cardId}" style="width:${Math.min(pct, 100)}%"></div>
                 </div>
-                <div class="cls-pct">${total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน'}</div>
+                <div class="cls-pct" id="pct-${cardId}">${total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน'}</div>
             `;
             
             if (currentYearContainer) {
@@ -1031,6 +1033,42 @@
                 list.appendChild(card);
             }
         });
+    }
+
+    // ===== INCREMENTAL DOM UPDATE =====
+    function updateClassroomsDOMIncremental(docChanges) {
+        let needsFullRender = false;
+
+        docChanges.forEach(change => {
+            if (change.type === 'added' || change.type === 'removed') {
+                needsFullRender = true;
+            } else if (change.type === 'modified') {
+                const c = { id: change.doc.id, ...change.doc.data() };
+                const cardId = `cls-card-${c.id.replace(/[\/\.]/g, '-')}`;
+                const countEl = document.getElementById(`count-${cardId}`);
+                const fillEl = document.getElementById(`fill-${cardId}`);
+                const pctEl = document.getElementById(`pct-${cardId}`);
+
+                if (countEl && fillEl && pctEl) {
+                    const voted = c.votedCount || 0;
+                    const total = c.totalStudents || 0;
+                    const pct = total > 0 ? (voted / total * 100) : 0;
+                    const full = pct >= 100;
+
+                    countEl.textContent = `${voted}/${total > 0 ? total : '?'}`;
+                    pctEl.textContent = total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน';
+                    fillEl.style.width = `${Math.min(pct, 100)}%`;
+                    if (full) fillEl.classList.add('full');
+                    else fillEl.classList.remove('full');
+                } else {
+                    needsFullRender = true;
+                }
+            }
+        });
+
+        if (needsFullRender) {
+            renderClassrooms(latestClassrooms);
+        }
     }
 
     // ===== SORT CLASSROOMS =====
@@ -1154,35 +1192,101 @@
         processAndRender();
     });
 
-    onSnapshot(collection(db, 'votes'), (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            const party = change.doc.data().party;
-            if (!party) return;
-            
-            if (change.type === "added") {
-                globalTally[party] = (globalTally[party] || 0) + 1;
-            } else if (change.type === "removed") {
-                globalTally[party] = Math.max(0, (globalTally[party] || 0) - 1);
-            }
-        });
-        processAndRender();
-    }, (err) => {
-        console.error('votes snapshot error:', err);
-        document.getElementById('lastUpdate').textContent = '⚠️ ไม่สามารถเชื่อมต่อ Firebase ได้';
-    });
+    // ✅ ปรับปรุง Performance: โหลดครั้งแรกด้วย getDocs (once) แล้วค่อย onSnapshot (child_changed)
+    async function initializeRealtimeListeners() {
+        const votesRef = collection(db, 'votes');
+        const classroomsRef = collection(db, 'classrooms');
 
-    // ===== LISTEN CLASSROOMS (real-time) =====
-    onSnapshot(collection(db, 'classrooms'), (snapshot) => {
-        const arr = [];
-        snapshot.forEach(docSnap => {
-            arr.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        latestClassrooms = sortClassrooms(arr);
-        renderClassrooms(latestClassrooms);
-        renderStats(latestVotes, latestClassrooms);
-    }, (err) => {
-        console.error('classrooms snapshot error:', err);
-    });
+        try {
+            // 1. โหลดข้อมูลครั้งแรก (เหมือน once('value'))
+            const [votesSnap, classroomsSnap] = await Promise.all([
+                getDocs(votesRef),
+                getDocs(classroomsRef)
+            ]);
+
+            // ประมวลผลคะแนนโหวต (Initial Load)
+            votesSnap.forEach((docSnap) => {
+                const party = docSnap.data().party;
+                if (party) {
+                    globalTally[party] = (globalTally[party] || 0) + 1;
+                }
+            });
+
+            // ประมวลผลห้องเรียน (Initial Load)
+            const classroomsMap = new Map();
+            classroomsSnap.forEach(docSnap => {
+                classroomsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+            });
+            
+            latestClassrooms = sortClassrooms(Array.from(classroomsMap.values()));
+            processAndRender();
+            renderClassrooms(latestClassrooms);
+            renderStats(latestVotes, latestClassrooms);
+
+            // 2. Listen การเปลี่ยนแปลงแบบ Incremental (เหมือน on('child_changed'))
+            let isInitialVotesEvent = true;
+            onSnapshot(votesRef, (snapshot) => {
+                if (isInitialVotesEvent) {
+                    isInitialVotesEvent = false;
+                    return; // ข้าม event แรกเพราะโหลดไปแล้วด้วย getDocs
+                }
+
+                let hasChanges = false;
+                snapshot.docChanges().forEach((change) => {
+                    const party = change.doc.data().party;
+                    if (!party) return;
+                    
+                    if (change.type === "added") {
+                        globalTally[party] = (globalTally[party] || 0) + 1;
+                        hasChanges = true;
+                    } else if (change.type === "removed") {
+                        globalTally[party] = Math.max(0, (globalTally[party] || 0) - 1);
+                        hasChanges = true;
+                    }
+                });
+                
+                if (hasChanges) processAndRender();
+            }, (err) => {
+                console.error('votes snapshot error:', err);
+                document.getElementById('lastUpdate').textContent = '⚠️ ไม่สามารถเชื่อมต่อ Firebase ได้';
+            });
+
+            let isInitialClassroomsEvent = true;
+            onSnapshot(classroomsRef, (snapshot) => {
+                if (isInitialClassroomsEvent) {
+                    isInitialClassroomsEvent = false;
+                    return; // ข้าม event แรก
+                }
+
+                let changed = false;
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added' || change.type === 'modified') {
+                        classroomsMap.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+                        changed = true;
+                    } else if (change.type === 'removed') {
+                        classroomsMap.delete(change.doc.id);
+                        changed = true;
+                    }
+                });
+
+                if (changed) {
+                    latestClassrooms = sortClassrooms(Array.from(classroomsMap.values()));
+                    // อัพเดท DOM แบบ Incremental เฉพาะจุดที่เปลี่ยน
+                    updateClassroomsDOMIncremental(snapshot.docChanges());
+                    renderStats(latestVotes, latestClassrooms);
+                }
+            }, (err) => {
+                console.error('classrooms snapshot error:', err);
+            });
+
+        } catch (error) {
+            console.error("Error initializing listeners:", error);
+            document.getElementById('lastUpdate').textContent = '⚠️ เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        }
+    }
+
+    // เริ่มต้นทำงาน
+    initializeRealtimeListeners();
 </script>
 </body>
 </html>

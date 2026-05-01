@@ -2005,9 +2005,177 @@
 
         successGoHome.addEventListener('click', closeSuccessModal);
 
+        // ===== RENDER ADMIN CLASSROOMS =====
+        function renderAdminClassroomsGrid(classrooms) {
+            const grid = document.getElementById('classroomGrid');
+
+            if (classrooms.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏫</div>
+                        <div>ยังไม่มีข้อมูลห้องเรียน</div>
+                        <div style="font-size:0.85em;margin-top:6px;color:#bbb;">กรุณาเพิ่มห้องเรียนด้านบน</div>
+                    </div>`;
+                return;
+            }
+
+            // Build grid
+            grid.innerHTML = '';
+            grid.style.display = 'block'; // Override grid-template-columns so rows take full width
+            let lastGroup = null;
+            let lastYear = null;
+            let currentYearContainer = null;
+
+            classrooms.forEach(classroom => {
+                const data     = classroom.data;
+                const voted    = data.votedCount    || 0;
+                const total    = data.totalStudents || 0;
+                const pct      = total > 0 ? (voted / total * 100) : 0;
+                const pctText  = total > 0 ? `${pct.toFixed(1)}%` : 'ไม่ระบุจำนวน';
+
+                // Determine color class
+                let colorClass = 'done-low';
+                if (pct >= 100)      colorClass = 'done-full';
+                else if (pct >= 60)  colorClass = 'done-high';
+                else if (pct >= 30)  colorClass = 'done-mid';
+
+                // Extract group (ปวช / ปวส) and Year
+                const yearMatch = classroom.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
+                const group = yearMatch ? yearMatch[1] : '';
+                const year = yearMatch ? yearMatch[2] : '';
+
+                if (group && group !== lastGroup) {
+                    const gh = document.createElement('div');
+                    gh.className = 'group-header';
+                    gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
+                    grid.appendChild(gh);
+                    lastGroup = group;
+                    lastYear = null; // Reset year group when group changes
+                }
+
+                if (year && year !== lastYear) {
+                    const yRow = document.createElement('div');
+                    yRow.className = 'year-row';
+                    yRow.style.cssText = 'display: flex; gap: 15px; margin-bottom: 12px; margin-top: 10px; width: 100%;';
+                    
+                    const yLabel = document.createElement('div');
+                    yLabel.className = 'year-label';
+                    yLabel.style.cssText = 'flex-shrink: 0; width: 44px; height: 50px; background: white; border: 2px solid #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.8em; color: #ef4444; margin-top: 5px;';
+                    yLabel.textContent = year;
+
+                    const yCards = document.createElement('div');
+                    yCards.className = 'year-cards';
+                    yCards.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; flex: 1;';
+                    
+                    yRow.appendChild(yLabel);
+                    yRow.appendChild(yCards);
+                    grid.appendChild(yRow);
+
+                    currentYearContainer = yCards;
+                    lastYear = year;
+                }
+
+                const cardId = `admin-cls-card-${classroom.id.replace(/[\/\.]/g, '-')}`;
+                const card = document.createElement('div');
+                card.className = `classroom-card ${colorClass}`;
+                card.id = cardId;
+                card.innerHTML = `
+                    <div class="cc-actions">
+                        <button class="cc-action-btn edit cc-edit" title="แก้ไขจำนวน" data-id="${classroom.id}" data-total="${total}">✏️</button>
+                        <button class="cc-action-btn del cc-delete" title="ลบห้องเรียน" data-id="${classroom.id}">✕</button>
+                    </div>
+                    <div class="cc-room-name">${classroom.id}</div>
+                    <div class="cc-count" id="admin-count-${cardId}">${voted}</div>
+                    <div class="cc-total" id="admin-total-${cardId}">จาก ${total > 0 ? total : '?'} คน</div>
+                    <span class="cc-pct" id="admin-pct-${cardId}">${pctText}</span>
+                    <div class="cc-bar">
+                        <div class="cc-bar-fill" id="admin-fill-${cardId}" style="width: ${Math.min(pct, 100)}%"></div>
+                    </div>
+                `;
+                
+                if (currentYearContainer) {
+                    currentYearContainer.appendChild(card);
+                } else {
+                    // Fallback if parsing fails (no year found)
+                    card.style.cssText = 'display: inline-block; width: 130px; margin: 0 15px 15px 0; vertical-align: top;';
+                    grid.appendChild(card);
+                }
+            });
+
+            // Classroom action buttons
+            grid.querySelectorAll('.cc-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDelModal(btn.dataset.id);
+                });
+            });
+            grid.querySelectorAll('.cc-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(btn.dataset.id, btn.dataset.total);
+                });
+            });
+        }
+
+        // ===== INCREMENTAL DOM UPDATE FOR ADMIN =====
+        function updateAdminClassroomsDOMIncremental(docChanges) {
+            let needsFullRender = false;
+
+            docChanges.forEach(change => {
+                if (change.type === 'added' || change.type === 'removed') {
+                    needsFullRender = true;
+                } else if (change.type === 'modified') {
+                    const c = { id: change.doc.id, data: change.doc.data() };
+                    const cardId = `admin-cls-card-${c.id.replace(/[\/\.]/g, '-')}`;
+                    const cardEl = document.getElementById(cardId);
+                    const countEl = document.getElementById(`admin-count-${cardId}`);
+                    const totalEl = document.getElementById(`admin-total-${cardId}`);
+                    const pctEl = document.getElementById(`admin-pct-${cardId}`);
+                    const fillEl = document.getElementById(`admin-fill-${cardId}`);
+                    
+                    // Update dataset on edit button
+                    const editBtn = cardEl ? cardEl.querySelector('.cc-edit') : null;
+
+                    if (cardEl && countEl && totalEl && pctEl && fillEl && editBtn) {
+                        const voted = c.data.votedCount || 0;
+                        const total = c.data.totalStudents || 0;
+                        const pct = total > 0 ? (voted / total * 100) : 0;
+                        
+                        // Update color class
+                        cardEl.classList.remove('done-low', 'done-mid', 'done-high', 'done-full');
+                        if (pct >= 100)      cardEl.classList.add('done-full');
+                        else if (pct >= 60)  cardEl.classList.add('done-high');
+                        else if (pct >= 30)  cardEl.classList.add('done-mid');
+                        else                 cardEl.classList.add('done-low');
+
+                        countEl.textContent = voted;
+                        totalEl.textContent = `จาก ${total > 0 ? total : '?'} คน`;
+                        pctEl.textContent = total > 0 ? `${pct.toFixed(1)}%` : 'ไม่ระบุจำนวน';
+                        fillEl.style.width = `${Math.min(pct, 100)}%`;
+                        
+                        editBtn.dataset.total = total;
+                    } else {
+                        needsFullRender = true;
+                    }
+                }
+            });
+
+            if (needsFullRender) {
+                renderAdminClassroomsGrid(adminLatestClassrooms);
+            }
+        }
+
+        let adminClassroomsMap = new Map();
+        let adminLatestClassrooms = [];
+        let adminUnsubscribeClassrooms = null;
+
         // ===== LOAD ADMIN STATS =====
         async function loadAdminStats() {
             const grid = document.getElementById('classroomGrid');
+            if (adminUnsubscribeClassrooms) {
+                // If already listening, we don't need to rebuild from scratch
+                return;
+            }
             grid.innerHTML = '<div class="loading">⏳ กำลังโหลดข้อมูล...</div>';
 
             // Reset summary
@@ -2016,146 +2184,75 @@
             });
 
             try {
+                // Initial Load
                 const querySnapshot = await getDocs(collection(db, 'classrooms'));
-
-                if (querySnapshot.empty) {
-                    grid.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🏫</div>
-                            <div>ยังไม่มีข้อมูลห้องเรียน</div>
-                            <div style="font-size:0.85em;margin-top:6px;color:#bbb;">กรุณาเพิ่มห้องเรียนด้านบน</div>
-                        </div>`;
-                    return;
-                }
-
-                // Collect and sort
-                const classrooms = [];
+                adminClassroomsMap.clear();
+                
                 querySnapshot.forEach(docSnap => {
-                    classrooms.push({ id: docSnap.id, data: docSnap.data() });
+                    adminClassroomsMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() });
                 });
 
-                classrooms.sort((a, b) => {
-                    const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
-                    const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
-                    if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
-                    if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
-                    if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
-                    return parseInt(aM[3]) - parseInt(bM[3]);
-                });
+                updateAdminSummaryAndClassrooms(true);
 
-                // Compute summary
-                let totalVoted = 0, totalStudents = 0;
-                classrooms.forEach(c => {
-                    totalVoted    += c.data.votedCount    || 0;
-                    totalStudents += c.data.totalStudents || 0;
-                });
-                const overallPct = totalStudents > 0
-                    ? ((totalVoted / totalStudents) * 100).toFixed(1)
-                    : '—';
-
-                document.getElementById('sumTotalRooms').textContent = classrooms.length;
-                document.getElementById('sumVoted').textContent      = totalVoted;
-                document.getElementById('sumTotal').textContent      = totalStudents;
-                document.getElementById('sumPct').textContent        = totalStudents > 0 ? `${overallPct}%` : '—';
-
-                // Build grid
-                grid.innerHTML = '';
-                grid.style.display = 'block'; // Override grid-template-columns so rows take full width
-                let lastGroup = null;
-                let lastYear = null;
-                let currentYearContainer = null;
-
-                classrooms.forEach(classroom => {
-                    const data     = classroom.data;
-                    const voted    = data.votedCount    || 0;
-                    const total    = data.totalStudents || 0;
-                    const pct      = total > 0 ? (voted / total * 100) : 0;
-                    const pctText  = total > 0 ? `${pct.toFixed(1)}%` : 'ไม่ระบุจำนวน';
-
-                    // Determine color class
-                    let colorClass = 'done-low';
-                    if (pct >= 100)      colorClass = 'done-full';
-                    else if (pct >= 60)  colorClass = 'done-high';
-                    else if (pct >= 30)  colorClass = 'done-mid';
-
-                    // Extract group (ปวช / ปวส) and Year
-                    const yearMatch = classroom.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
-                    const group = yearMatch ? yearMatch[1] : '';
-                    const year = yearMatch ? yearMatch[2] : '';
-
-                    if (group && group !== lastGroup) {
-                        const gh = document.createElement('div');
-                        gh.className = 'group-header';
-                        gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
-                        grid.appendChild(gh);
-                        lastGroup = group;
-                        lastYear = null; // Reset year group when group changes
-                    }
-
-                    if (year && year !== lastYear) {
-                        const yRow = document.createElement('div');
-                        yRow.className = 'year-row';
-                        yRow.style.cssText = 'display: flex; gap: 15px; margin-bottom: 12px; margin-top: 10px; width: 100%;';
-                        
-                        const yLabel = document.createElement('div');
-                        yLabel.className = 'year-label';
-                        yLabel.style.cssText = 'flex-shrink: 0; width: 44px; height: 50px; background: white; border: 2px solid #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.8em; color: #ef4444; margin-top: 5px;';
-                        yLabel.textContent = year;
-
-                        const yCards = document.createElement('div');
-                        yCards.className = 'year-cards';
-                        yCards.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; flex: 1;';
-                        
-                        yRow.appendChild(yLabel);
-                        yRow.appendChild(yCards);
-                        grid.appendChild(yRow);
-
-                        currentYearContainer = yCards;
-                        lastYear = year;
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = `classroom-card ${colorClass}`;
-                    card.innerHTML = `
-                        <div class="cc-actions">
-                            <button class="cc-action-btn edit cc-edit" title="แก้ไขจำนวน" data-id="${classroom.id}" data-total="${total}">✏️</button>
-                            <button class="cc-action-btn del cc-delete" title="ลบห้องเรียน" data-id="${classroom.id}">✕</button>
-                        </div>
-                        <div class="cc-room-name">${classroom.id}</div>
-                        <div class="cc-count">${voted}</div>
-                        <div class="cc-total">จาก ${total > 0 ? total : '?'} คน</div>
-                        <span class="cc-pct">${pctText}</span>
-                        <div class="cc-bar">
-                            <div class="cc-bar-fill" style="width: ${Math.min(pct, 100)}%"></div>
-                        </div>
-                    `;
+                // Listen for changes
+                adminUnsubscribeClassrooms = onSnapshot(collection(db, 'classrooms'), (snapshot) => {
+                    let changed = false;
+                    let docChanges = snapshot.docChanges();
                     
-                    if (currentYearContainer) {
-                        currentYearContainer.appendChild(card);
-                    } else {
-                        // Fallback if parsing fails (no year found)
-                        card.style.cssText = 'display: inline-block; width: 130px; margin: 0 15px 15px 0; vertical-align: top;';
-                        grid.appendChild(card);
-                    }
-                });
+                    docChanges.forEach(change => {
+                        if (change.type === 'added' || change.type === 'modified') {
+                            adminClassroomsMap.set(change.doc.id, { id: change.doc.id, data: change.doc.data() });
+                            changed = true;
+                        } else if (change.type === 'removed') {
+                            adminClassroomsMap.delete(change.doc.id);
+                            changed = true;
+                        }
+                    });
 
-                // Classroom action buttons
-                grid.querySelectorAll('.cc-delete').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        openDelModal(btn.dataset.id);
-                    });
-                });
-                grid.querySelectorAll('.cc-edit').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        openEditModal(btn.dataset.id, btn.dataset.total);
-                    });
+                    if (changed) {
+                        updateAdminSummaryAndClassrooms(false, docChanges);
+                    }
+                }, (err) => {
+                    console.error('admin classrooms snapshot error:', err);
                 });
 
             } catch (error) {
                 grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div>เกิดข้อผิดพลาดในการโหลดข้อมูล</div><div style="font-size:0.8em;color:#bbb;margin-top:4px;">${error.message}</div></div>`;
                 console.error('loadAdminStats error:', error);
+            }
+        }
+
+        function updateAdminSummaryAndClassrooms(isInitialRender, docChanges = []) {
+            // Sort
+            adminLatestClassrooms = Array.from(adminClassroomsMap.values());
+            adminLatestClassrooms.sort((a, b) => {
+                const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+                const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+                if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
+                if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
+                if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
+                return parseInt(aM[3]) - parseInt(bM[3]);
+            });
+
+            // Compute summary
+            let totalVoted = 0, totalStudents = 0;
+            adminLatestClassrooms.forEach(c => {
+                totalVoted    += c.data.votedCount    || 0;
+                totalStudents += c.data.totalStudents || 0;
+            });
+            const overallPct = totalStudents > 0
+                ? ((totalVoted / totalStudents) * 100).toFixed(1)
+                : '—';
+
+            document.getElementById('sumTotalRooms').textContent = adminLatestClassrooms.length;
+            document.getElementById('sumVoted').textContent      = totalVoted;
+            document.getElementById('sumTotal').textContent      = totalStudents;
+            document.getElementById('sumPct').textContent        = totalStudents > 0 ? `${overallPct}%` : '—';
+
+            if (isInitialRender || docChanges.length === 0) {
+                renderAdminClassroomsGrid(adminLatestClassrooms);
+            } else {
+                updateAdminClassroomsDOMIncremental(docChanges);
             }
         }
 
