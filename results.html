@@ -755,33 +755,16 @@
             <button class="back-btn" id="btnCloseDraw" style="margin: 0 auto; display:none; background:rgba(255,255,255,0.1); color:#fff;" onclick="document.getElementById('drawModal').classList.remove('show')">ปิดหน้าต่าง</button>
         </div>
     </div>
-    <!-- DRAW MODAL -->
-    <div class="modal" id="drawModal">
-        <div class="modal-box">
-            <h2 style="margin-top:0;">🎲 สุ่มผู้ชนะ (คะแนนเสมอกัน)</h2>
-            <div id="drawAnimation" style="font-size: 3em; padding: 40px 0; font-weight: bold;">?</div>
-            <div id="drawResult" style="display:none; margin-bottom: 20px;"></div>
-            <button class="back-btn" id="btnCloseDraw" style="margin: 0 auto; display:none; background:rgba(255,255,255,0.1); color:#fff;" onclick="document.getElementById('drawModal').classList.remove('show')">ปิดหน้าต่าง</button>
-        </div>
-    </div>
 </div>
 
 <script type="module">
-    import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getFirestore, collection, getDocs, onSnapshot, query, orderBy, doc, setDoc }
-        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    const firebaseConfig = {
-        apiKey:            "AIzaSyAdfVLD3iFX38JIpnHsnjg0SHTpSjhD2LU",
-        authDomain:        "ptechvote.firebaseapp.com",
-        projectId:         "ptechvote",
-        storageBucket:     "ptechvote.firebasestorage.app",
-        messagingSenderId: "977883969042",
-        appId:             "1:977883969042:web:c3957d1ebfa26736e5cacb"
-    };
+    const SUPABASE_URL = 'https://vdceebtdfiysopihxcgr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkY2VlYnRkZml5c29waWh4Y2dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzY2NjUsImV4cCI6MjA5NDg1MjY2NX0.PBRhvA19RFp5aG0ThJUjigaw_DZ-5H3jFLVnuUE9efg';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const questionMarkIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:100%; height:100%; color:var(--text); opacity:0.85;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
 
     // ===== PARTY CONFIG =====
     let partyConfig = {
@@ -850,9 +833,7 @@
             const colCls  = rank === 1 ? 'r1-col' : '';
             const rankLbl = rank === 1 ? (isTied ? '🥇=' : '🥇') : rank === 2 ? (isTied ? '🥈=' : '🥈') : rank === 3 ? (isTied ? '🥉=' : '🥉') : `#${rank}`;
 
-            let iconHtml = meta.imageUrl 
-                ? `<img src="${meta.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
-                : meta.icon;
+            let iconHtml = questionMarkIcon;
 
             const col = document.createElement('div');
             col.className = `podium-col ${colCls}`;
@@ -875,7 +856,7 @@
                     <div class="p-bar" style="height:${barH}px; background: ${meta.color}"></div>
                 </div>
                 <div class="platform-base">
-                    <div class="p-name">${meta.name}</div>
+                    <div class="p-name">?</div>
                 </div>
             `;
             wrap.appendChild(col);
@@ -917,17 +898,13 @@
                             : trueRank === 3 ? (isTied ? '🥉=' : '🥉') 
                             : `${trueRank}${isTied ? '=' : ''}`;
 
-            let iconHtml = meta.imageUrl 
-                ? `<img src="${meta.imageUrl}" style="width:1.4em; height:1.4em; border-radius:50%; object-fit:cover; display:inline-block;">` 
-                : meta.icon;
-
             const row = document.createElement('div');
             row.className = 'rt-row';
             row.innerHTML = `
                 <div class="rt-rank">${rankEmoji}</div>
                 <div class="rt-party">
-                    <span class="rt-party-icon" style="display:flex; align-items:center;">${iconHtml}</span>
-                    <span class="rt-party-name">${meta.name}</span>
+                    <span class="rt-party-icon" style="display:flex; align-items:center; width: 1.4em; height: 1.4em;">${questionMarkIcon}</span>
+                    <span class="rt-party-name">?</span>
                 </div>
                 <div class="rt-bar-col">
                     <div class="rt-mini-bar">
@@ -946,7 +923,7 @@
     // ===== RENDER STATS =====
     function renderStats(sorted, classrooms) {
         const totalVotes   = sorted.reduce((s, p) => s + p.votes, 0);
-        const totalStudents = classrooms.reduce((s, c) => s + (c.totalStudents || 0), 0);
+        const totalStudents = classrooms.reduce((s, c) => s + (c.total_students || 0), 0);
         const pct = totalStudents > 0
             ? ((totalVotes / totalStudents) * 100).toFixed(1) + '%'
             : '—';
@@ -974,8 +951,8 @@
         let currentYearContainer = null;
 
         classrooms.forEach(c => {
-            const voted = c.votedCount    || 0;
-            const total = c.totalStudents || 0;
+            const voted = c.voted_count    || 0;
+            const total = c.total_students || 0;
             const pct   = total > 0 ? (voted / total * 100) : 0;
             const full  = pct >= 100;
 
@@ -1035,42 +1012,6 @@
         });
     }
 
-    // ===== INCREMENTAL DOM UPDATE =====
-    function updateClassroomsDOMIncremental(docChanges) {
-        let needsFullRender = false;
-
-        docChanges.forEach(change => {
-            if (change.type === 'added' || change.type === 'removed') {
-                needsFullRender = true;
-            } else if (change.type === 'modified') {
-                const c = { id: change.doc.id, ...change.doc.data() };
-                const cardId = `cls-card-${c.id.replace(/[\/\.]/g, '-')}`;
-                const countEl = document.getElementById(`count-${cardId}`);
-                const fillEl = document.getElementById(`fill-${cardId}`);
-                const pctEl = document.getElementById(`pct-${cardId}`);
-
-                if (countEl && fillEl && pctEl) {
-                    const voted = c.votedCount || 0;
-                    const total = c.totalStudents || 0;
-                    const pct = total > 0 ? (voted / total * 100) : 0;
-                    const full = pct >= 100;
-
-                    countEl.textContent = `${voted}/${total > 0 ? total : '?'}`;
-                    pctEl.textContent = total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน';
-                    fillEl.style.width = `${Math.min(pct, 100)}%`;
-                    if (full) fillEl.classList.add('full');
-                    else fillEl.classList.remove('full');
-                } else {
-                    needsFullRender = true;
-                }
-            }
-        });
-
-        if (needsFullRender) {
-            renderClassrooms(latestClassrooms);
-        }
-    }
-
     // ===== SORT CLASSROOMS =====
     function sortClassrooms(arr) {
         return arr.sort((a, b) => {
@@ -1096,9 +1037,13 @@
             if (!arr.find(x => x.name === p)) arr.push({ name: p, votes: 0 });
         });
         
-        // Sort by votes desc, ties keep stable alphabetical order (no forced reordering)
+        // Sort by votes desc, ties keep stable alphabetical order
         arr.sort((a, b) => {
             if (b.votes !== a.votes) return b.votes - a.votes;
+            if (forcedWinner && forcedWinnerVotes === a.votes) {
+                if (a.name === forcedWinner) return -1;
+                if (b.name === forcedWinner) return 1;
+            }
             return (partyConfig[a.name]?.name || a.name).localeCompare(partyConfig[b.name]?.name || b.name, 'th');
         });
         latestVotes = arr;
@@ -1126,18 +1071,15 @@
 
         if (mathematicalTie.length > 1) {
             if (forcedWinner && forcedWinnerVotes === topVotes && mathematicalTie.find(p => p.name === forcedWinner)) {
-                let winnerName = (partyConfig[forcedWinner] || {}).name || forcedWinner;
-                content.innerHTML = `🏁 ผู้ชนะจากการจับฉลากคือ <span class="highlight">${winnerName}</span> (คะแนน ${topVotes} เสียง)`;
+                content.innerHTML = `🏁 ผู้ชนะจากการจับฉลากคือ <span class="highlight">พรรค ?</span> (คะแนน ${topVotes} เสียง)`;
                 btn.style.display = 'none';
             } else {
-                let names = mathematicalTie.map(p => (partyConfig[p.name] || {}).name || p.name).join(' และ ');
-                content.innerHTML = `⚠️ คะแนนนำเสมอกันที่ <span class="highlight">${topVotes}</span> เสียง: ${names}`;
+                content.innerHTML = `⚠️ คะแนนนำเสมอกันที่ <span class="highlight">${topVotes}</span> เสียง`;
                 btn.style.display = 'inline-block';
                 btn.onclick = () => window.openDrawModal(mathematicalTie, topVotes);
             }
         } else {
-            let winnerName = (partyConfig[latestVotes[0].name] || {}).name || latestVotes[0].name;
-            content.innerHTML = `🏆 อันดับ 1 คือ <span class="highlight">${winnerName}</span> ด้วยคะแนน ${topVotes} เสียง`;
+            content.innerHTML = `🏆 อันดับ 1 (พรรค ?) ด้วยคะแนน ${topVotes} เสียง`;
             btn.style.display = 'none';
         }
     }
@@ -1154,7 +1096,7 @@
         let interval = setInterval(() => {
             let pName = tiedParties[counter % tiedParties.length].name;
             let p = partyConfig[pName] || { name: pName, color: '#fff' };
-            animBox.innerHTML = `<span style="color:${p.color}">${p.name}</span>`;
+            animBox.innerHTML = `<span style="color:${p.color}">พรรค ?</span>`;
             counter++;
         }, 100);
         
@@ -1164,120 +1106,77 @@
             let p = partyConfig[winner.name] || { name: winner.name, color: '#fff' };
             animBox.style.display = 'none';
             resBox.style.display = 'block';
-            resBox.innerHTML = `ผู้ชนะคือ <br><span style="color:${p.color}; font-size:1.4em">${p.name}</span> ✨`;
+            resBox.innerHTML = `ผู้ชนะคือ <br><span style="color:${p.color}; font-size:1.4em">พรรค ?</span> ✨`;
             btnClose.style.display = 'inline-block';
             
             try {
-                await setDoc(doc(db, 'config', 'tieBreaker'), { winnerId: winner.name, votes: topVotes });
+                await supabase.from('config').upsert({ key: 'tieBreaker', value: { winnerId: winner.name, votes: topVotes }, updated_at: new Date().toISOString() });
             } catch(e) { console.error("Save tieBreaker failed", e); }
         }, 3000);
     }
 
-    // ===== LISTENERS =====
-    onSnapshot(doc(db, 'config', 'partyDetails'), (docSnap) => {
-        if (docSnap.exists() && docSnap.data().parties) {
-            partyConfig = docSnap.data().parties;
-            processAndRender();
-        }
-    });
-
-    onSnapshot(doc(db, 'config', 'tieBreaker'), (docSnap) => {
-        if (docSnap.exists()) {
-            forcedWinner = docSnap.data().winnerId;
-            forcedWinnerVotes = docSnap.data().votes;
-        } else {
-            forcedWinner = null;
-            forcedWinnerVotes = 0;
-        }
-        processAndRender();
-    });
-
-    // ✅ ปรับปรุง Performance: โหลดครั้งแรกด้วย getDocs (once) แล้วค่อย onSnapshot (child_changed)
-    async function initializeRealtimeListeners() {
-        const votesRef = collection(db, 'votes');
-        const classroomsRef = collection(db, 'classrooms');
-
+    // ===== REALTIME DATA HANDLING =====
+    async function reloadVotesTally() {
         try {
-            // 1. โหลดข้อมูลครั้งแรก (เหมือน once('value'))
-            const [votesSnap, classroomsSnap] = await Promise.all([
-                getDocs(votesRef),
-                getDocs(classroomsRef)
-            ]);
+            const { data: votes, error } = await supabase.from('votes').select('party');
+            if (error) throw error;
+            globalTally = {};
+            
+            // Dummy party config generation to protect real names
+            let newPartyConfig = {};
+            let colorPalette = ['#667eea', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+            let colorIdx = 0;
 
-            // ประมวลผลคะแนนโหวต (Initial Load)
-            votesSnap.forEach((docSnap) => {
-                const party = docSnap.data().party;
-                if (party) {
-                    globalTally[party] = (globalTally[party] || 0) + 1;
+            (votes || []).forEach(v => {
+                if (v.party) {
+                    globalTally[v.party] = (globalTally[v.party] || 0) + 1;
+                    if (!newPartyConfig[v.party]) {
+                        newPartyConfig[v.party] = {
+                            id: v.party,
+                            name: `พรรคที่ ${Object.keys(newPartyConfig).length + 1}`,
+                            icon: '❔',
+                            color: colorPalette[colorIdx % colorPalette.length],
+                            imageUrl: ''
+                        };
+                        colorIdx++;
+                    }
                 }
             });
-
-            // ประมวลผลห้องเรียน (Initial Load)
-            const classroomsMap = new Map();
-            classroomsSnap.forEach(docSnap => {
-                classroomsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-            });
-            
-            latestClassrooms = sortClassrooms(Array.from(classroomsMap.values()));
+            partyConfig = newPartyConfig;
             processAndRender();
+        } catch (e) {
+            console.error("Error reloading votes tally:", e);
+        }
+    }
+
+    async function reloadClassrooms() {
+        try {
+            const { data: classrooms, error } = await supabase.from('classrooms').select('*');
+            if (error) throw error;
+            const classroomsMap = new Map();
+            (classrooms || []).forEach(c => {
+                classroomsMap.set(c.id, c);
+            });
+            latestClassrooms = sortClassrooms(Array.from(classroomsMap.values()));
             renderClassrooms(latestClassrooms);
             renderStats(latestVotes, latestClassrooms);
+        } catch (e) {
+            console.error("Error reloading classrooms:", e);
+        }
+    }
 
-            // 2. Listen การเปลี่ยนแปลงแบบ Incremental (เหมือน on('child_changed'))
-            let isInitialVotesEvent = true;
-            onSnapshot(votesRef, (snapshot) => {
-                if (isInitialVotesEvent) {
-                    isInitialVotesEvent = false;
-                    return; // ข้าม event แรกเพราะโหลดไปแล้วด้วย getDocs
-                }
+    async function initializeRealtimeListeners() {
+        document.getElementById('lastUpdate').textContent = '⏳ กำลังโหลด...';
+        try {
+            await reloadVotesTally();
+            await reloadClassrooms();
+            await loadTieBreaker();
 
-                let hasChanges = false;
-                snapshot.docChanges().forEach((change) => {
-                    const party = change.doc.data().party;
-                    if (!party) return;
-                    
-                    if (change.type === "added") {
-                        globalTally[party] = (globalTally[party] || 0) + 1;
-                        hasChanges = true;
-                    } else if (change.type === "removed") {
-                        globalTally[party] = Math.max(0, (globalTally[party] || 0) - 1);
-                        hasChanges = true;
-                    }
-                });
-                
-                if (hasChanges) processAndRender();
-            }, (err) => {
-                console.error('votes snapshot error:', err);
-                document.getElementById('lastUpdate').textContent = '⚠️ ไม่สามารถเชื่อมต่อ Firebase ได้';
-            });
-
-            let isInitialClassroomsEvent = true;
-            onSnapshot(classroomsRef, (snapshot) => {
-                if (isInitialClassroomsEvent) {
-                    isInitialClassroomsEvent = false;
-                    return; // ข้าม event แรก
-                }
-
-                let changed = false;
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added' || change.type === 'modified') {
-                        classroomsMap.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
-                        changed = true;
-                    } else if (change.type === 'removed') {
-                        classroomsMap.delete(change.doc.id);
-                        changed = true;
-                    }
-                });
-
-                if (changed) {
-                    latestClassrooms = sortClassrooms(Array.from(classroomsMap.values()));
-                    // อัพเดท DOM แบบ Incremental เฉพาะจุดที่เปลี่ยน
-                    updateClassroomsDOMIncremental(snapshot.docChanges());
-                    renderStats(latestVotes, latestClassrooms);
-                }
-            }, (err) => {
-                console.error('classrooms snapshot error:', err);
-            });
+            // Polling every 10 seconds to replace realtime websockets
+            setInterval(() => {
+                reloadVotesTally();
+                reloadClassrooms();
+            }, 10000);
 
         } catch (error) {
             console.error("Error initializing listeners:", error);
@@ -1285,7 +1184,44 @@
         }
     }
 
-    // เริ่มต้นทำงาน
+    // loadPartyDetails and config-details-changes have been removed to prevent data leaks
+
+    async function loadTieBreaker() {
+        try {
+            const { data } = await supabase.from('config').select('value').eq('key', 'tieBreaker').maybeSingle();
+            if (data && data.value) {
+                forcedWinner = data.value.winnerId;
+                forcedWinnerVotes = data.value.votes;
+            } else {
+                forcedWinner = null;
+                forcedWinnerVotes = 0;
+            }
+            processAndRender();
+        } catch (e) {
+            forcedWinner = null;
+            forcedWinnerVotes = 0;
+            processAndRender();
+        }
+    }
+
+    // Subscribe to tieBreaker config changes
+    supabase.channel('config-tiebreaker-changes').on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'config',
+        filter: 'key=eq.tieBreaker'
+    }, (payload) => {
+        if (payload.new && payload.new.value) {
+            forcedWinner = payload.new.value.winnerId;
+            forcedWinnerVotes = payload.new.value.votes;
+        } else {
+            forcedWinner = null;
+            forcedWinnerVotes = 0;
+        }
+        processAndRender();
+    }).subscribe();
+
+    // Start
     initializeRealtimeListeners();
 </script>
 </body>
