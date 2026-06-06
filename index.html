@@ -1435,16 +1435,26 @@
             grid.querySelectorAll('.btn-delete-party').forEach(b => { b.addEventListener('click', e => { if(confirm(`คุณต้องการลบพรรค "${adminEditingParties[e.target.dataset.id].name}" ใช่หรือไม่?`)){ delete adminEditingParties[e.target.dataset.id]; renderAdminPartyGrid(); } }); });
         }
 
+        let adminConfigChannel = null;
         function showAdmin() {
             document.getElementById('voteContent').style.display = 'none';
             document.getElementById('adminPanel').classList.add('active');
             document.getElementById('mainContainer').classList.add('admin-mode');
             loadAdminStats(); loadAdminPartySettings();
+            // Subscribe to realtime config changes ONLY when admin panel is open
+            if (!adminConfigChannel) {
+                adminConfigChannel = supabase.channel('config-changes').on('postgres_changes',{event:'*',schema:'public',table:'config',filter:'key=eq.partyDetails'},(payload)=>{
+                    if(payload.new&&payload.new.value&&payload.new.value.parties){partyConfig=payload.new.value.parties;renderPartyGrid();loadAdminPartySettings();}
+                }).subscribe();
+            }
         }
         function hideAdmin() {
             document.getElementById('adminPanel').classList.remove('active');
             document.getElementById('voteContent').style.display = 'block';
             document.getElementById('mainContainer').classList.remove('admin-mode');
+            // Unsubscribe from realtime channels when leaving admin
+            if (adminConfigChannel) { supabase.removeChannel(adminConfigChannel); adminConfigChannel = null; }
+            if (adminRealtimeChannel) { supabase.removeChannel(adminRealtimeChannel); adminRealtimeChannel = null; }
             showPage(1);
         }
 
@@ -1577,7 +1587,8 @@
                 return;
             }
             clearPwdSubmit.textContent='⏳ กำลังลบ...';
-            try { await supabase.from('votes').delete().neq('id',0); await supabase.from('classrooms').update({voted_count:0}).neq('id',''); showToast('ลบข้อมูลการโหวตทั้งหมดเรียบร้อยแล้ว','success'); loadAdminStats(true); closeClearPwdModal(); }
+            // [FIXED] ใช้ atomic RPC ล้างข้อมูลทั้งหมด รวม students_master.registered ด้วย
+            try { const {error:re}=await supabase.rpc('reset_all_votes'); if(re) throw re; await fetchClassroomsAndStudents(); showToast('ลบข้อมูลการโหวตทั้งหมดเรียบร้อยแล้ว','success'); loadAdminStats(true); closeClearPwdModal(); }
             catch(e){ clearPwdError.textContent='❌ เกิดข้อผิดพลาด: '+e.message; }
             finally { clearPwdSubmit.disabled=false; clearPwdSubmit.innerHTML='🗑️ ยืนยัน'; }
         }
@@ -1687,9 +1698,9 @@
                 await supabase.from('students_master').update({registered: true}).eq('phone', selectedPhone);
                 fetchClassroomsAndStudents(); // Refresh data so the name disappears
 
-                const {data:ec} = await supabase.from('classrooms').select('voted_count').eq('id',classroom).single();
-                if(ec){ await supabase.from('classrooms').update({voted_count:(ec.voted_count||0)+1}).eq('id',classroom); }
-                else { await supabase.from('classrooms').insert({id:classroom,total_students:0,voted_count:1,level,year,room}); }
+                // [FIXED] ใช้ atomic RPC แทน SELECT+UPDATE เพื่อป้องกัน race condition
+                const {error:ce} = await supabase.rpc('increment_voted_count', {p_classroom_id:classroom, p_level:level, p_year:year, p_room:room});
+                if(ce) throw ce;
                 
                 closeConfirmModal(); openSuccessModal(selectedParty);
             } catch(e){ console.error('Error submitting vote:',e); closeConfirmModal(); showToast('เกิดข้อผิดพลาด: '+(e.message||JSON.stringify(e)),'error',5000); modalConfirm.disabled=false; modalConfirm.textContent='✅ ยืนยัน'; }
@@ -2066,7 +2077,9 @@
 
         console.log('P.TECH Vote 69 initialized (Supabase)');
         renderPartyGrid();
-        fetchClassroomsAndStudents();
+        // Stagger initial load to prevent thundering herd when all students open at once
+        const staggerDelay = Math.floor(Math.random() * 2000);
+        setTimeout(() => fetchClassroomsAndStudents(), staggerDelay);
 
         // Load party config from Supabase
         (async function loadPartyConfig(){
@@ -2076,10 +2089,8 @@
             } catch(e){console.error('Error loading party config:',e);}
         })();
 
-        // Realtime party config
-        supabase.channel('config-changes').on('postgres_changes',{event:'*',schema:'public',table:'config',filter:'key=eq.partyDetails'},(payload)=>{
-            if(payload.new&&payload.new.value&&payload.new.value.parties){partyConfig=payload.new.value.parties;renderPartyGrid();if(document.getElementById('adminPanel').classList.contains('active'))loadAdminPartySettings();}
-        }).subscribe();
+        // Realtime party config — moved to showAdmin() to avoid exceeding 500 concurrent Realtime connection limit
+        // Admin will get realtime updates; voters load config once on page load (no live updates needed)
 
         if(new URLSearchParams(window.location.search).get('admin')==='true') openPwdModal();
     </script>
