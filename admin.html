@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P.TECH Vote 69 — Admin Panel</title>
+    <meta name="description" content="แผงควบคุมระบบเลือกตั้ง P.TECH สำหรับผู้ดูแลระบบ">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Prompt', 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        .top-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 24px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .top-header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-header .badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.55em;
+            font-weight: 600;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .header-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            font-family: 'Prompt', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .header-btn:hover { transform: translateY(-2px); }
+        .header-btn.refresh { background: rgba(255,255,255,0.15); color: white; }
+        .header-btn.refresh:hover { background: rgba(255,255,255,0.25); }
+        .header-btn.vote-link { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .header-btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+        .header-btn.danger:hover { box-shadow: 0 8px 25px rgba(239,68,68,0.4); }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 25px 20px;
+        }
+
+        /* ===== SUMMARY CARDS ===== */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .summary-card {
+            border-radius: 16px;
+            padding: 22px 20px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            color: white;
+        }
+        .summary-card.purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .summary-card.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .summary-card.orange { background: linear-gradient(135deg, #f7971e, #ffd200); }
+        .summary-card.red { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .summary-card.blue { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .summary-value { font-size: 2.2em; font-weight: 800; line-height: 1; }
+        .summary-label { font-size: 0.85em; opacity: 0.9; margin-top: 5px; }
+
+        /* ===== SECTION ===== */
+        .section {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+        .section-title {
+            font-size: 1.15em;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== RESULTS ===== */
+        .results-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+        .result-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .result-medal { font-size: 1.6em; width: 36px; text-align: center; flex-shrink: 0; }
+        .result-img {
+            width: 44px; height: 62px; border-radius: 6px; overflow: hidden;
+            background: #e2e8f0; display: flex; align-items: center; justify-content: center;
+            font-size: 2em; flex-shrink: 0;
+        }
+        .result-img img { width: 100%; height: 100%; object-fit: cover; }
+        .result-info { flex: 1; }
+        .result-name { font-weight: 700; color: #1e293b; font-size: 1.1em; }
+        .result-sub { font-size: 0.85em; color: #64748b; }
+        .result-score { text-align: right; flex-shrink: 0; }
+        .result-votes { font-size: 1.6em; font-weight: 800; line-height: 1; }
+        .result-pct { font-size: 0.85em; color: #64748b; font-weight: 600; margin-top: 4px; }
+
+        /* Chart container */
+        .chart-container { position: relative; height: 350px; width: 100%; margin-top: 20px; }
+        .chart-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        .chart-toggle-btn {
+            padding: 10px 20px; border-radius: 20px;
+            font-size: 0.9em; font-weight: 600; font-family: 'Prompt', sans-serif;
+            cursor: pointer; transition: all 0.25s; border: none;
+        }
+        .chart-toggle-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+        }
+        .chart-toggle-btn.inactive { background: #f1f5f9; color: #64748b; }
+
+        /* ===== PARTY SETTINGS ===== */
+        .party-settings-grid { display: grid; gap: 12px; margin-bottom: 15px; }
+        .party-setting-item {
+            background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .party-setting-item input[type="file"] { display: none; }
+        .p-img-preview {
+            width: 44px; height: 62px; border-radius: 6px; object-fit: cover;
+            border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; background: white; flex-shrink: 0; overflow: hidden;
+        }
+        .p-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .party-setting-item input[type="text"] {
+            flex: 1; min-width: 120px; padding: 8px 12px; border: 1px solid #ccc;
+            border-radius: 6px; font-family: 'Prompt', sans-serif; font-size: 0.95em;
+        }
+        .party-setting-item input[type="color"] {
+            -webkit-appearance: none; border: none; width: 36px; height: 36px;
+            border-radius: 6px; cursor: pointer; padding: 0; background: none; flex-shrink: 0;
+        }
+        .party-setting-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .party-setting-item input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+
+        /* ===== STUDENT MANAGEMENT ===== */
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .form-row input, .form-row select {
+            flex: 1; min-width: 140px; padding: 10px 14px; border-radius: 10px;
+            border: 2px solid #e2e8f0; font-family: 'Sarabun', sans-serif; font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+        .form-row input:focus, .form-row select:focus { outline: none; border-color: #667eea; }
+
+        /* ===== CARD REGISTRY TABLE ===== */
+        .card-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .card-table th {
+            background: #f1f5f9;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 700;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .card-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .card-table tr:hover td { background: #f8fafc; }
+        .card-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .card-status.voted { background: #dcfce7; color: #16a34a; }
+        .card-status.pending { background: #fef9c3; color: #ca8a04; }
+
+        /* ===== CLASSROOM GRID ===== */
+        .classroom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+        }
+        .group-header {
+            grid-column: 1 / -1;
+            font-size: 0.9em; font-weight: 700; color: #667eea;
+            text-transform: uppercase; letter-spacing: 1px;
+            padding: 6px 0 4px; border-bottom: 2px solid #667eea30;
+        }
+        .classroom-card {
+            background: white; border: 2px solid #e9ecef; border-radius: 14px;
+            padding: 16px; text-align: center; position: relative;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06); transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .classroom-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
+        .classroom-card.done-low { border-color: #fc5c7d; }
+        .classroom-card.done-mid { border-color: #f7971e; }
+        .classroom-card.done-high { border-color: #11998e; }
+        .classroom-card.done-full { border-color: #38ef7d; background: #f0fff7; }
+        .cc-room-name { font-size: 1.05em; font-weight: 700; color: #333; margin-bottom: 6px; }
+        .cc-count { font-size: 1.6em; font-weight: 700; color: #667eea; line-height: 1; }
+        .cc-total { font-size: 0.8em; color: #888; margin-top: 2px; }
+        .cc-pct { display: inline-block; margin-top: 8px; font-size: 0.78em; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: #f0f0f0; color: #555; }
+        .classroom-card.done-full .cc-pct { background: #d4f5e5; color: #0a6640; }
+        .cc-bar { width: 100%; height: 5px; background: #eee; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .cc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .done-low .cc-bar-fill { background: linear-gradient(90deg, #fc5c7d, #ff9a9e); }
+        .done-mid .cc-bar-fill { background: linear-gradient(90deg, #f7971e, #ffd200); }
+        .done-high .cc-bar-fill { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .done-full .cc-bar-fill { background: linear-gradient(90deg, #11998e, #38ef7d); }
+        .cc-actions { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px; }
+        .cc-action-btn {
+            background: none; border: none; cursor: pointer; font-size: 0.85em;
+            color: #ccc; line-height: 1; padding: 2px 4px; border-radius: 4px; transition: color 0.2s, background 0.2s;
+        }
+        .cc-action-btn:hover { background: #f0f0f0; }
+        .cc-action-btn.edit:hover { color: #4f46e5; }
+        .cc-action-btn.del:hover { color: #e53935; }
+
+        /* Empty state */
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #aaa; }
+        .empty-state-icon { font-size: 3em; margin-bottom: 12px; }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 10px;
+            font-size: 0.95em; font-weight: 600; font-family: 'Prompt', sans-serif;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(102,126,234,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #f1f5f9; color: #64748b; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(239,68,68,0.3); }
+        .btn-delete-party { background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex-shrink: 0; font-family: 'Sarabun', sans-serif; }
+        .btn-delete-party:hover { background: #ef4444; color: white; }
+
+        /* ===== TOAST ===== */
+        .toast-wrap {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 99999; display: flex; flex-direction: column;
+            align-items: center; gap: 10px; pointer-events: none;
+        }
+        .toast {
+            display: flex; align-items: center; gap: 10px;
+            background: #1e2535; color: #f1f5f9; border-radius: 14px;
+            padding: 13px 20px; font-size: 0.95em; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            min-width: 240px; max-width: 380px; pointer-events: all;
+            opacity: 0; transform: translateY(-18px) scale(0.95);
+            transition: all 0.35s cubic-bezier(0.34,1.4,0.64,1);
+            border-left: 4px solid #667eea;
+        }
+        .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast.success { border-left-color: #22c55e; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
+        .toast-icon { font-size: 1.2em; flex-shrink: 0; }
+        .toast-msg { flex: 1; line-height: 1.4; }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
+            z-index: 9999; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; border-radius: 22px; padding: 32px 28px 24px;
+            max-width: 400px; width: 100%; text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            transform: scale(0.88) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
+        .modal-icon { font-size: 2.5em; margin-bottom: 12px; }
+        .modal-title { font-size: 1.2em; font-weight: 800; color: #333; margin-bottom: 6px; }
+        .modal-sub { font-size: 0.88em; color: #999; margin-bottom: 20px; }
+        .modal-divider { height: 1px; background: #f0f0f0; margin-bottom: 18px; }
+        .modal-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-btn {
+            padding: 13px 10px; border: none; border-radius: 12px;
+            font-size: 1em; font-weight: 700; font-family: 'Prompt', sans-serif;
+            cursor: pointer; transition: all 0.25s;
+        }
+        .modal-btn-cancel { background: #f5f5f5; color: #666; }
+        .modal-btn-cancel:hover { background: #e8e8e8; }
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            box-shadow: 0 6px 18px rgba(102,126,234,0.35);
+        }
+        .modal-btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(102,126,234,0.5); }
+        .modal-btn-delete {
+            background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+            box-shadow: 0 6px 18px rgba(239,68,68,0.3);
+        }
+        .modal-btn-delete:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(239,68,68,0.45); }
+
+        .pwd-input {
+            width: 100%; padding: 13px 16px; border: 2px solid #e0e0e0;
+            border-radius: 12px; font-size: 1em; font-family: 'Prompt', sans-serif;
+            text-align: center; letter-spacing: 4px; transition: all 0.3s; margin-bottom: 6px;
+        }
+        .pwd-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+        .pwd-error { font-size: 0.83em; color: #ef4444; min-height: 20px; margin-bottom: 16px; font-weight: 500; }
+
+        /* ===== LOGIN PAGE ===== */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            padding: 20px;
+        }
+        .login-box {
+            background: white; border-radius: 24px; padding: 40px 35px;
+            max-width: 400px; width: 100%; text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+        .login-icon { font-size: 3em; margin-bottom: 16px; }
+        .login-title { font-size: 1.6em; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+        .login-sub { font-size: 0.9em; color: #94a3b8; margin-bottom: 24px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .top-header { padding: 16px 18px; }
+            .top-header h1 { font-size: 1.2em; }
+            .main-content { padding: 15px 12px; }
+            .summary-row { grid-template-columns: repeat(2, 1fr); }
+            .classroom-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+            .section { padding: 18px; }
+            .form-row { flex-direction: column; }
+            .chart-container { height: 250px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- ===== LOGIN PAGE ===== -->
+    <div id="loginPage" class="login-page">
+        <div class="login-box">
+            <div class="login-icon">🔐</div>
+            <div class="login-title">Admin Panel</div>
+            <div class="login-sub">P.TECH Vote 69 — กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</div>
+            <input type="password" class="pwd-input" id="pwdInput" placeholder="••••••" autocomplete="current-password">
+            <div class="pwd-error" id="pwdError"></div>
+            <div class="modal-divider"></div>
+            <button class="btn btn-primary" id="pwdSubmit" style="width:100%; padding:15px;">🔓 เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN DASHBOARD ===== -->
+    <div id="adminDashboard" style="display:none;">
+        <!-- Header -->
+        <div class="top-header">
+            <div class="top-header-inner">
+                <h1>📊 Admin Panel <span class="badge">P.TECH Vote 69</span></h1>
+                <div class="header-actions">
+                    <button class="header-btn refresh" id="btnRefresh">🔄 รีเฟรช</button>
+                    <a href="vote.html" class="header-btn vote-link" style="text-decoration:none;">🗳️ ไปหน้าโหวต</a>
+                    <button class="header-btn danger" id="btnClearAll">🗑️ ล้างข้อมูลทั้งหมด</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Summary Cards -->
+            <div class="summary-row" id="summaryRow">
+                <div class="summary-card purple">
+                    <div class="summary-value" id="sumTotalRooms">—</div>
+                    <div class="summary-label">ห้องเรียนทั้งหมด</div>
+                </div>
+                <div class="summary-card green">
+                    <div class="summary-value" id="sumVoted">—</div>
+                    <div class="summary-label">โหวตแล้ว</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-value" id="sumTotal">—</div>
+                    <div class="summary-label">นักเรียนทั้งหมด</div>
+                </div>
+                <div class="summary-card red">
+                    <div class="summary-value" id="sumPct">—</div>
+                    <div class="summary-label">% ที่ใช้สิทธิ์</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-value" id="sumCards">—</div>
+                    <div class="summary-label">💳 บัตรที่ใช้ไป</div>
+                </div>
+            </div>
+
+            <!-- Election Results -->
+            <div class="section">
+                <a href="results.html" class="header-btn" style="text-decoration:none; background: linear-gradient(135deg, #10b981, #059669); color: white; margin-bottom: 15px; display: inline-block;">📊 ไปหน้าผลคะแนน (Results)</a>
+                <div class="section-title">📈 ผลคะแนนเลือกตั้ง (Real-time)</div>
+                <div class="results-grid" id="resultsGrid">
+                    <div style="text-align:center; padding:20px; color:#94a3b8;">⏳ กำลังโหลด...</div>
+                </div>
+
+                <div class="chart-toggle">
+                    <button class="chart-toggle-btn active" id="btnBarChart">📊 กราฟแท่ง</button>
+                    <button class="chart-toggle-btn inactive" id="btnPieChart">🥧 กราฟวงกลม</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Card Registry -->
+            <div class="section">
+                <div class="section-title">
+                    💳 รายการบัตรที่แตะแล้ว
+                    <div style="margin-left:auto; display:flex; gap:10px;">
+                        <button class="btn btn-primary" id="btnExportCards" style="padding:6px 14px; font-size:0.85em; background: linear-gradient(135deg, #10b981, #059669); color: white;">📥 Export Excel</button>
+                        <button class="btn btn-secondary" id="btnRefreshCards" style="padding:6px 14px; font-size:0.85em;">🔄 รีเฟรช</button>
+                        <button class="btn btn-danger" id="btnClearCards" style="padding:6px 14px; font-size:0.85em;">🗑️ ล้างบัตรทั้งหมด</button>
+                    </div>
+                </div>
+                <div id="cardTableWrap" style="overflow-x:auto;">
+                    <table class="card-table" id="cardTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Card ID</th>
+                                <th>สถานะ</th>
+                                <th>พรรคที่เลือก</th>
+                                <th>เวลาโหวต</th>
+                                <th>เวลาแตะบัตร</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cardTableBody">
+                            <tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">⏳ กำลังโหลด...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Results Page Link -->
+            <div class="section">
+                <div class="section-title">📊 ลิงก์หน้าผลคะแนน</div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <a href="results.html" class="btn btn-primary" style="text-decoration:none; text-align:center; flex:1;">📊 ผลเลือกตั้ง (สาธารณะ)</a>
+                    <a href="vote.html" class="btn btn-secondary" style="text-decoration:none; text-align:center; flex:1;">🗳️ หน้าโหวต (แตะบัตร)</a>
+                </div>
+            </div>
+
+            <!-- Party Settings -->
+            <div class="section">
+                <div class="section-title">🏷️ ตั้งค่าพรรค</div>
+                <div class="party-settings-grid" id="partySettingsGrid"></div>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn btn-secondary" id="btnAddParty">➕ เพิ่มพรรค</button>
+                    <button class="btn btn-primary" id="savePartyNames">💾 บันทึกการตั้งค่าพรรค</button>
+                </div>
+            </div>
+
+            <!-- Student Management -->
+            <div class="section">
+                <div class="section-title">👨‍🎓 จัดการรายชื่อนักเรียน</div>
+
+                <h4 style="margin-bottom:10px; font-size:1em; color:#444;">เพิ่มทีละคน</h4>
+                <div class="form-row">
+                    <input type="tel" id="newPhone" placeholder="เบอร์โทร (10 หลัก)" maxlength="10">
+                    <input type="text" id="newClassroom" placeholder="ห้อง (เช่น ปวช.1/1)">
+                </div>
+                <div class="form-row">
+                    <input type="text" id="newFirstName" placeholder="ชื่อ (ไม่ต้องมีคำนำหน้า)">
+                    <input type="text" id="newLastName" placeholder="นามสกุล">
+                </div>
+                <button class="btn btn-primary" id="btnAddStudent" style="margin-bottom:20px;">➕ เพิ่มรายชื่อ</button>
+
+                <hr style="border:none; border-top:1px dashed #e2e8f0; margin: 20px 0;">
+
+                <h4 style="margin-bottom:5px; font-size:1em; color:#444;">นำเข้ารายชื่อหลายคน (CSV)</h4>
+                <div style="font-size:0.85em; color:#94a3b8; margin-bottom:12px;">รูปแบบ: <b>เบอร์โทร, ชื่อ, นามสกุล, ห้อง</b></div>
+                <div class="form-row">
+                    <input type="file" id="csvFileInput" accept=".csv">
+                    <button class="btn btn-secondary" id="btnImportCsv">📄 นำเข้า CSV</button>
+                </div>
+
+                <hr style="border:none; border-top:1px dashed #e2e8f0; margin: 20px 0;">
+
+                <h4 style="margin-bottom:5px; font-size:1em; color:#444;">นำเข้าแบบด่วน (วางข้อความ)</h4>
+                <div style="font-size:0.85em; color:#94a3b8; margin-bottom:12px;">ก๊อปปี้รายชื่อมาวาง (<b>ชื่อ นามสกุล</b>) ระบบจะสร้างเบอร์โทรให้อัตโนมัติ</div>
+                <input type="text" id="rawTextClassroom" placeholder="ระบุห้องเรียน (เช่น ปวช.1/1)" style="width:100%; padding:10px; border-radius:10px; border:2px solid #e2e8f0; font-family:'Prompt',sans-serif; margin-bottom:10px;">
+                <textarea id="rawTextInput" rows="5" placeholder="สมชาย ใจดี&#10;สมหญิง รักเรียน" style="width:100%; padding:10px; border-radius:10px; border:2px solid #e2e8f0; font-family:'Prompt',sans-serif; margin-bottom:10px; resize:vertical;"></textarea>
+                <button class="btn btn-secondary" id="btnImportText" style="background:linear-gradient(135deg, #4ade80, #22c55e); color:white;">✅ นำเข้าจากข้อความ</button>
+            </div>
+
+            <!-- Classroom Stats -->
+            <div class="section">
+                <div class="section-title">🏫 สถิติรายห้อง</div>
+                <div id="classroomGrid" class="classroom-grid">
+                    <div style="text-align:center; padding:30px; color:#94a3b8; grid-column:1/-1;">⏳ กำลังโหลด...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DELETE CLASSROOM MODAL ===== -->
+    <div class="modal-overlay" id="delModal">
+        <div class="modal-box">
+            <div class="modal-icon">🗑️</div>
+            <div class="modal-title">ลบห้องเรียนนี้?</div>
+            <div id="delRoomName" style="display:inline-block;background:#fef2f2;color:#ef4444;border-radius:8px;padding:4px 14px;font-weight:700;margin-bottom:8px;">—</div>
+            <div class="modal-sub">ข้อมูลการโหวตจะยังคงอยู่ แต่ห้องนี้จะถูกลบออก</div>
+            <div class="modal-divider"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="delCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-delete" id="delConfirm">🗑️ ลบออก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EDIT TOTAL MODAL ===== -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-box">
+            <div class="modal-icon">✏️</div>
+            <div class="modal-title">แก้ไขจำนวนนักเรียน</div>
+            <div id="editRoomName" style="display:inline-block;background:#eef2ff;color:#4f46e5;border-radius:8px;padding:4px 14px;font-weight:700;margin-bottom:12px;">—</div>
+            <div style="margin-bottom:20px;">
+                <input type="number" id="editTotalInput" class="pwd-input" placeholder="ใส่จำนวนนักเรียนทั้งหมด" min="0" style="letter-spacing:0;">
+            </div>
+            <div class="modal-divider"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="editCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-confirm" id="editConfirm">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CLEAR ALL MODAL ===== -->
+    <div class="modal-overlay" id="clearModal">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title" style="color:#ef4444;">ล้างข้อมูลทั้งหมด!</div>
+            <div class="modal-sub">การลบข้อมูลทั้งหมดจะไม่สามารถกู้คืนได้<br>กรุณากรอกรหัสผ่าน Admin เพื่อยืนยัน</div>
+            <input type="password" class="pwd-input" id="clearPwdInput" placeholder="••••••" autocomplete="current-password">
+            <div class="pwd-error" id="clearPwdError"></div>
+            <div class="modal-divider"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="clearCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-delete" id="clearConfirm">🗑️ ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CLEAR CARDS MODAL ===== -->
+    <div class="modal-overlay" id="clearCardsModal">
+        <div class="modal-box">
+            <div class="modal-icon">💳</div>
+            <div class="modal-title" style="color:#ef4444;">ล้างข้อมูลบัตรทั้งหมด?</div>
+            <div class="modal-sub">ข้อมูลการแตะบัตรทั้งหมดจะถูกลบ<br>บัตรที่เคยโหวตแล้วจะสามารถโหวตได้อีกครั้ง</div>
+            <div class="modal-divider"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn modal-btn-cancel" id="clearCardsCancel">← ยกเลิก</button>
+                <button class="modal-btn modal-btn-delete" id="clearCardsConfirm">🗑️ ลบทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        // ===== SUPABASE INIT =====
+        const SUPABASE_URL = 'https://vdceebtdfiysopihxcgr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkY2VlYnRkZml5c29waWh4Y2dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzY2NjUsImV4cCI6MjA5NDg1MjY2NX0.PBRhvA19RFp5aG0ThJUjigaw_DZ-5H3jFLVnuUE9efg';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let partyConfig = {};
+        let adminEditingParties = {};
+
+        // Helper to escape HTML to prevent XSS
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ===== TOAST =====
+        function showToast(msg, type = 'info', duration = 3000) {
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const wrap = document.getElementById('toastWrap');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span class="toast-msg">${msg}</span>`;
+            wrap.appendChild(toast);
+            requestAnimationFrame(() => { requestAnimationFrame(() => { toast.classList.add('show'); }); });
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, duration);
+        }
+
+        // ===== LOGIN =====
+        const pwdInput = document.getElementById('pwdInput');
+        const pwdError = document.getElementById('pwdError');
+
+        async function attemptLogin() {
+            const btn = document.getElementById('pwdSubmit');
+            btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...';
+            try {
+                const { data } = await sb.from('config').select('value').eq('key', 'adminPassword').single();
+                if (data && pwdInput.value === data.value) {
+                    document.getElementById('loginPage').style.display = 'none';
+                    document.getElementById('adminDashboard').style.display = 'block';
+                    initDashboard();
+                } else {
+                    pwdError.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                    pwdInput.value = '';
+                    pwdInput.focus();
+                }
+            } catch (e) {
+                pwdError.textContent = '❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้';
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔓 เข้าสู่ระบบ';
+            }
+        }
+
+        document.getElementById('pwdSubmit').addEventListener('click', attemptLogin);
+        pwdInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+
+        // ===== INIT DASHBOARD =====
+        async function initDashboard() {
+            await loadPartyConfig();
+            loadAdminStats(true);
+            loadResults();
+            loadCards();
+        }
+
+        // ===== LOAD PARTY CONFIG =====
+        async function loadPartyConfig() {
+            try {
+                const { data } = await sb.from('config').select('value').eq('key', 'partyDetails').single();
+                if (data && data.value && data.value.parties) {
+                    partyConfig = data.value.parties;
+                } else {
+                    partyConfig = {
+                        'พรรค A': { id: 'พรรค A', name: 'พรรค A', icon: '🔴', color: '#f87171', imageUrl: '' },
+                        'พรรค B': { id: 'พรรค B', name: 'พรรค B', icon: '🔵', color: '#60a5fa', imageUrl: '' },
+                        'พรรค C': { id: 'พรรค C', name: 'พรรค C', icon: '🟢', color: '#4ade80', imageUrl: '' }
+                    };
+                }
+                loadAdminPartySettings();
+            } catch (e) {
+                console.error('Error loading party config:', e);
+            }
+        }
+
+        // ===== RESULTS =====
+        let chartInstance = null;
+        let chartType = 'bar';
+
+        async function loadResults() {
+            try {
+                const { data: votes, error } = await sb.from('votes').select('party');
+                if (error) throw error;
+
+                const voteCounts = {};
+                (votes || []).forEach(v => { voteCounts[v.party] = (voteCounts[v.party] || 0) + 1; });
+                const totalVotes = votes.length;
+
+                const sorted = Object.values(partyConfig)
+                    .map(p => ({
+                        ...p,
+                        votes: voteCounts[p.id] || 0,
+                        percent: totalVotes > 0 ? (((voteCounts[p.id] || 0) / totalVotes) * 100).toFixed(1) : '0'
+                    }))
+                    .sort((a, b) => {
+                        if (b.votes !== a.votes) return b.votes - a.votes;
+                        return (a.order || 0) - (b.order || 0);
+                    });
+
+                renderResultsList(sorted, totalVotes);
+                renderChart(sorted);
+            } catch (e) {
+                console.error('Error loading results:', e);
+            }
+        }
+
+        function renderResultsList(parties, totalVotes) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = `<div style="text-align:center;font-size:1.05em;color:#475569;margin-bottom:15px;font-weight:600;">ผู้มาใช้สิทธิ์ทั้งหมด: <span style="color:#ef4444;font-weight:800;">${totalVotes}</span> เสียง</div>`;
+            parties.forEach((p, idx) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const medal = idx < 3 && p.votes > 0 ? medals[idx] : `<span style="color:#94a3b8;font-weight:700;">${idx + 1}.</span>`;
+                let imgHtml = p.imageUrl ? `<img src="${p.imageUrl}">` : p.icon || '🗳️';
+
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <div class="result-medal">${medal}</div>
+                    <div class="result-img" style="border:2px solid ${p.color || '#ccc'}">${imgHtml}</div>
+                    <div class="result-info"><div class="result-name">${p.name}</div><div class="result-sub">${p.votes > 0 ? (p.votes === totalVotes ? 'ชนะเอกฉันท์' : '') : 'ยังไม่มีคะแนน'}</div></div>
+                    <div class="result-score"><div class="result-votes" style="color:${p.color || '#333'}">${p.votes}</div><div class="result-pct">${p.percent}%</div></div>`;
+                grid.appendChild(item);
+            });
+        }
+
+        function renderChart(parties) {
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: parties.map(p => p.name),
+                    datasets: [{ label: 'คะแนนโหวต', data: parties.map(p => p.votes), backgroundColor: parties.map(p => p.color || '#64748b'), borderWidth: 1 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: chartType === 'pie', position: 'right' }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} คะแนน` } } },
+                    scales: chartType === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : undefined
+                }
+            });
+        }
+
+        document.getElementById('btnBarChart').addEventListener('click', () => {
+            chartType = 'bar';
+            document.getElementById('btnBarChart').className = 'chart-toggle-btn active';
+            document.getElementById('btnPieChart').className = 'chart-toggle-btn inactive';
+            loadResults();
+        });
+        document.getElementById('btnPieChart').addEventListener('click', () => {
+            chartType = 'pie';
+            document.getElementById('btnPieChart').className = 'chart-toggle-btn active';
+            document.getElementById('btnBarChart').className = 'chart-toggle-btn inactive';
+            loadResults();
+        });
+
+        // ===== CARD REGISTRY =====
+        async function loadCards() {
+            try {
+                const { data: cards, error } = await sb.from('card_registry').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+
+                const tbody = document.getElementById('cardTableBody');
+                const votedCount = (cards || []).filter(c => c.has_voted).length;
+                document.getElementById('sumCards').textContent = votedCount;
+
+                if (!cards || cards.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">ยังไม่มีบัตรที่แตะ</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                cards.forEach((c, i) => {
+                    const votedAt = c.voted_at ? new Date(c.voted_at).toLocaleString('th-TH') : '—';
+                    const createdAt = new Date(c.created_at).toLocaleString('th-TH');
+                    const statusHtml = c.has_voted
+                        ? '<span class="card-status voted">✅ โหวตแล้ว</span>'
+                        : '<span class="card-status pending">⏳ ยังไม่โหวต</span>';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td style="font-family:'Courier New',monospace; font-weight:700;">${c.card_id}</td>
+                        <td>${statusHtml}</td>
+                        <td>${c.voted_party || '—'}</td>
+                        <td>${votedAt}</td>
+                        <td>${createdAt}</td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error('Error loading cards:', e);
+                showToast('ไม่สามารถโหลดข้อมูลบัตรได้', 'error');
+            }
+        }
+
+        document.getElementById('btnRefreshCards').addEventListener('click', loadCards);
+
+        // Export Cards to Excel (CSV with BOM)
+        document.getElementById('btnExportCards').addEventListener('click', async () => {
+            const btn = document.getElementById('btnExportCards');
+            btn.disabled = true; btn.textContent = '⏳...';
+            try {
+                const { data: cards, error } = await sb.from('card_registry').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                
+                if (!cards || cards.length === 0) {
+                    showToast('ไม่มีข้อมูลสำหรับ Export', 'warning');
+                    return;
+                }
+
+                let csvContent = '\uFEFF'; // BOM for Excel UTF-8 support
+                csvContent += 'ลำดับ,Card ID,สถานะ,พรรคที่เลือก,เวลาโหวต,เวลาแตะบัตร\n';
+
+                cards.forEach((c, i) => {
+                    const status = c.has_voted ? 'โหวตแล้ว' : 'ยังไม่โหวต';
+                    const party = c.voted_party || '';
+                    const votedAt = c.voted_at ? new Date(c.voted_at).toLocaleString('th-TH') : '';
+                    const createdAt = new Date(c.created_at).toLocaleString('th-TH');
+                    
+                    // Escape quotes for CSV
+                    const row = [
+                        i + 1,
+                        `"${c.card_id}"`,
+                        `"${status}"`,
+                        `"${party}"`,
+                        `"${votedAt}"`,
+                        `"${createdAt}"`
+                    ].join(',');
+                    
+                    csvContent += row + '\n';
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `election_cards_${new Date().getTime()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('Export สำเร็จ', 'success');
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '📥 Export Excel';
+            }
+        });
+
+        // Clear Cards
+        document.getElementById('btnClearCards').addEventListener('click', () => {
+            document.getElementById('clearCardsModal').classList.add('show');
+        });
+        document.getElementById('clearCardsCancel').addEventListener('click', () => {
+            document.getElementById('clearCardsModal').classList.remove('show');
+        });
+        document.getElementById('clearCardsConfirm').addEventListener('click', async () => {
+            const btn = document.getElementById('clearCardsConfirm');
+            btn.disabled = true; btn.textContent = '⏳...';
+            try {
+                // Delete all rows from card_registry
+                const { error } = await sb.from('card_registry').delete().gte('created_at', '1970-01-01T00:00:00Z');
+                if (error) throw error;
+                showToast('ล้างข้อมูลบัตรทั้งหมดแล้ว', 'success');
+                loadCards();
+            } catch (e) {
+                showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🗑️ ลบทั้งหมด';
+                document.getElementById('clearCardsModal').classList.remove('show');
+            }
+        });
+
+        // ===== CLASSROOM STATS =====
+        let adminClassroomsMap = new Map();
+        let adminRealtimeChannel = null;
+
+        function sortClassrooms(arr) {
+            return arr.sort((a, b) => {
+                const aM = a.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+                const bM = b.id.match(/^(ปวช|ปวส)\.(\d+)[/-](\d+)$/);
+                if (!aM || !bM) return a.id.localeCompare(b.id, 'th');
+                if (aM[1] !== bM[1]) return aM[1] === 'ปวช' ? -1 : 1;
+                if (aM[2] !== bM[2]) return parseInt(aM[2]) - parseInt(bM[2]);
+                return parseInt(aM[3]) - parseInt(bM[3]);
+            });
+        }
+
+        async function loadAdminStats(forceRefresh = false) {
+            const grid = document.getElementById('classroomGrid');
+            if (!forceRefresh && adminRealtimeChannel) return;
+            grid.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;grid-column:1/-1;">⏳ กำลังโหลด...</div>';
+
+            try {
+                const { data: classrooms, error } = await sb.from('classrooms').select('*');
+                if (error) throw error;
+                adminClassroomsMap.clear();
+                (classrooms || []).forEach(c => adminClassroomsMap.set(c.id, c));
+                updateAdminSummaryAndRender();
+
+                if (adminRealtimeChannel) sb.removeChannel(adminRealtimeChannel);
+                adminRealtimeChannel = sb.channel('admin-classrooms').on('postgres_changes', { event: '*', schema: 'public', table: 'classrooms' }, (payload) => {
+                    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') adminClassroomsMap.set(payload.new.id, payload.new);
+                    else if (payload.eventType === 'DELETE') adminClassroomsMap.delete(payload.old.id);
+                    updateAdminSummaryAndRender();
+                }).subscribe();
+            } catch (e) {
+                grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div>เกิดข้อผิดพลาด: ${e.message}</div></div>`;
+            }
+        }
+
+        function updateAdminSummaryAndRender() {
+            const classrooms = sortClassrooms(Array.from(adminClassroomsMap.values()));
+            let totalVoted = 0, totalStudents = 0;
+            classrooms.forEach(c => { totalVoted += c.voted_count || 0; totalStudents += c.total_students || 0; });
+            const pct = totalStudents > 0 ? ((totalVoted / totalStudents) * 100).toFixed(1) : '—';
+
+            document.getElementById('sumTotalRooms').textContent = classrooms.length;
+            document.getElementById('sumVoted').textContent = totalVoted;
+            document.getElementById('sumTotal').textContent = totalStudents;
+            document.getElementById('sumPct').textContent = totalStudents > 0 ? `${pct}%` : '—';
+            renderClassroomsGrid(classrooms);
+        }
+
+        function renderClassroomsGrid(classrooms) {
+            const grid = document.getElementById('classroomGrid');
+            if (classrooms.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏫</div><div>ยังไม่มีข้อมูลห้องเรียน</div></div>';
+                return;
+            }
+            grid.innerHTML = '';
+            grid.style.display = '';
+            let lastGroup = null, lastYear = null, currentYearContainer = null;
+
+            classrooms.forEach(c => {
+                const voted = c.voted_count || 0, total = c.total_students || 0;
+                const pct = total > 0 ? (voted / total * 100) : 0;
+                const pctText = total > 0 ? `${pct.toFixed(1)}%` : 'ไม่ระบุ';
+                let colorClass = 'done-low';
+                if (pct >= 100) colorClass = 'done-full';
+                else if (pct >= 60) colorClass = 'done-high';
+                else if (pct >= 30) colorClass = 'done-mid';
+
+                const ym = c.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
+                const group = ym ? ym[1] : '', year = ym ? ym[2] : '';
+
+                if (group && group !== lastGroup) {
+                    const gh = document.createElement('div');
+                    gh.className = 'group-header';
+                    gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
+                    grid.appendChild(gh);
+                    lastGroup = group; lastYear = null;
+                }
+                if (year && year !== lastYear) {
+                    const yRow = document.createElement('div');
+                    yRow.style.cssText = 'display:flex;gap:15px;margin-bottom:12px;margin-top:10px;width:100%;';
+                    const yLabel = document.createElement('div');
+                    yLabel.style.cssText = 'flex-shrink:0;width:44px;height:50px;background:white;border:2px solid #ef4444;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.8em;color:#ef4444;margin-top:5px;';
+                    yLabel.textContent = year;
+                    const yCards = document.createElement('div');
+                    yCards.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:15px;flex:1;';
+                    yRow.appendChild(yLabel); yRow.appendChild(yCards);
+                    grid.appendChild(yRow);
+                    currentYearContainer = yCards; lastYear = year;
+                }
+
+                const card = document.createElement('div');
+                card.className = `classroom-card ${colorClass}`;
+                card.innerHTML = `
+                    <div class="cc-actions">
+                        <button class="cc-action-btn edit cc-edit" title="แก้ไขจำนวน" data-id="${c.id}" data-total="${total}">✏️</button>
+                        <button class="cc-action-btn del cc-delete" title="ลบห้องเรียน" data-id="${c.id}">✕</button>
+                    </div>
+                    <div class="cc-room-name">${c.id}</div>
+                    <div class="cc-count">${voted}</div>
+                    <div class="cc-total">จาก ${total > 0 ? total : '?'} คน</div>
+                    <span class="cc-pct">${pctText}</span>
+                    <div class="cc-bar"><div class="cc-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>`;
+                if (currentYearContainer) currentYearContainer.appendChild(card);
+                else { card.style.cssText = 'display:inline-block;width:130px;margin:0 15px 15px 0;vertical-align:top;'; grid.appendChild(card); }
+            });
+
+            grid.querySelectorAll('.cc-delete').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openDelModal(b.dataset.id); }));
+            grid.querySelectorAll('.cc-edit').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openEditModal(b.dataset.id, b.dataset.total); }));
+        }
+
+        // ===== DELETE CLASSROOM MODAL =====
+        let pendingDeleteId = null;
+        function openDelModal(id) { pendingDeleteId = id; document.getElementById('delRoomName').textContent = id; document.getElementById('delModal').classList.add('show'); }
+        function closeDelModal() { document.getElementById('delModal').classList.remove('show'); pendingDeleteId = null; }
+        document.getElementById('delCancel').addEventListener('click', closeDelModal);
+        document.getElementById('delModal').addEventListener('click', e => { if (e.target.id === 'delModal') closeDelModal(); });
+        document.getElementById('delConfirm').addEventListener('click', async () => {
+            if (!pendingDeleteId) return;
+            const id = pendingDeleteId; closeDelModal();
+            try {
+                await sb.from('classrooms').delete().eq('id', id);
+                showToast(`ลบห้อง ${id} เรียบร้อย`, 'success');
+                loadAdminStats(true);
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        });
+
+        // ===== EDIT TOTAL MODAL =====
+        let pendingEditId = null;
+        function openEditModal(id, total) {
+            pendingEditId = id;
+            document.getElementById('editRoomName').textContent = id;
+            document.getElementById('editTotalInput').value = total || '';
+            document.getElementById('editModal').classList.add('show');
+            setTimeout(() => document.getElementById('editTotalInput').focus(), 320);
+        }
+        function closeEditModal() { document.getElementById('editModal').classList.remove('show'); pendingEditId = null; }
+        document.getElementById('editCancel').addEventListener('click', closeEditModal);
+        document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') closeEditModal(); });
+        document.getElementById('editConfirm').addEventListener('click', async () => {
+            if (!pendingEditId) return;
+            const n = parseInt(document.getElementById('editTotalInput').value, 10);
+            if (isNaN(n) || n < 0) { showToast('กรุณาระบุตัวเลขที่ถูกต้อง', 'warning'); return; }
+            const btn = document.getElementById('editConfirm'); btn.disabled = true; btn.textContent = '⏳...';
+            try {
+                await sb.from('classrooms').update({ total_students: n }).eq('id', pendingEditId);
+                showToast(`อัปเดตห้อง ${pendingEditId} แล้ว`, 'success');
+                loadAdminStats(true); closeEditModal();
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+            finally { btn.disabled = false; btn.textContent = '💾 บันทึก'; }
+        });
+
+        // ===== CLEAR ALL DATA =====
+        document.getElementById('btnClearAll').addEventListener('click', () => {
+            document.getElementById('clearPwdInput').value = '';
+            document.getElementById('clearPwdError').textContent = '';
+            document.getElementById('clearModal').classList.add('show');
+            setTimeout(() => document.getElementById('clearPwdInput').focus(), 320);
+        });
+        document.getElementById('clearCancel').addEventListener('click', () => { document.getElementById('clearModal').classList.remove('show'); });
+
+        document.getElementById('clearConfirm').addEventListener('click', async () => {
+            const btn = document.getElementById('clearConfirm');
+            const pwd = document.getElementById('clearPwdInput');
+            const err = document.getElementById('clearPwdError');
+            btn.disabled = true; btn.textContent = '⏳ ตรวจสอบ...';
+            try {
+                const { data } = await sb.from('config').select('value').eq('key', 'adminPassword').single();
+                if (!data || pwd.value !== data.value) {
+                    err.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                    pwd.value = ''; pwd.focus();
+                    btn.disabled = false; btn.textContent = '🗑️ ยืนยัน';
+                    return;
+                }
+            } catch (e) {
+                err.textContent = '❌ ไม่สามารถเชื่อมต่อได้';
+                btn.disabled = false; btn.textContent = '🗑️ ยืนยัน';
+                return;
+            }
+            btn.textContent = '⏳ กำลังลบ...';
+            try {
+                const { error: re } = await sb.rpc('reset_all_votes');
+                if (re) throw re;
+                showToast('ลบข้อมูลทั้งหมดเรียบร้อยแล้ว', 'success');
+                loadAdminStats(true); loadResults(); loadCards();
+                document.getElementById('clearModal').classList.remove('show');
+            } catch (e) {
+                err.textContent = '❌ Error: ' + e.message;
+            } finally {
+                btn.disabled = false; btn.textContent = '🗑️ ยืนยัน';
+            }
+        });
+        document.getElementById('clearPwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('clearConfirm').click(); });
+
+        // ===== REFRESH =====
+        document.getElementById('btnRefresh').addEventListener('click', () => {
+            loadAdminStats(true); loadResults(); loadCards();
+            showToast('รีเฟรชข้อมูลแล้ว', 'info');
+        });
+
+        // ===== PARTY SETTINGS =====
+        async function compressImage(file) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height, max = 300;
+                        if (w > h && w > max) { h *= max / w; w = max; } else if (h > max) { w *= max / h; h = max; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadAdminPartySettings() {
+            adminEditingParties = JSON.parse(JSON.stringify(partyConfig));
+            renderAdminPartyGrid();
+        }
+
+        function renderAdminPartyGrid() {
+            const grid = document.getElementById('partySettingsGrid');
+            grid.innerHTML = '';
+            
+            // Ensure all parties have an order
+            let keys = Object.keys(adminEditingParties);
+            keys.forEach((k, idx) => {
+                if (adminEditingParties[k].order === undefined) adminEditingParties[k].order = idx;
+            });
+            // Sort keys by order
+            keys.sort((k1, k2) => adminEditingParties[k1].order - adminEditingParties[k2].order);
+
+            keys.forEach((key, index) => {
+                const p = adminEditingParties[key];
+                const item = document.createElement('div');
+                item.className = 'party-setting-item';
+                let previewHtml = p.imageUrl ? `<img src="${p.imageUrl}">` : `<span>${p.icon || '🗳️'}</span>`;
+                
+                const btnUp = index > 0 ? `<button class="btn-move-party" data-dir="up" data-idx="${index}" title="เลื่อนขึ้น">⬆️</button>` : `<button class="btn-move-party" style="visibility:hidden">⬆️</button>`;
+                const btnDown = index < keys.length - 1 ? `<button class="btn-move-party" data-dir="down" data-idx="${index}" title="เลื่อนลง">⬇️</button>` : `<button class="btn-move-party" style="visibility:hidden">⬇️</button>`;
+
+                item.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; gap:2px; margin-right:8px;">
+                        ${btnUp}
+                        ${btnDown}
+                    </div>
+                    <label class="p-img-preview" title="คลิกเพื่ออัปโหลดรูป" style="color:${p.color};border-color:${p.color};">${previewHtml}<input type="file" accept="image/*" class="party-img-input" data-id="${p.id}"></label>
+                    <input type="color" value="${p.color || '#667eea'}" class="party-color-input" data-id="${p.id}" title="สีพรรค">
+                    <input type="text" value="${p.name}" class="party-name-input" data-id="${p.id}" placeholder="ชื่อพรรค">
+                    <button class="btn-delete-party" data-id="${p.id}" title="ลบพรรค">ลบ</button>
+                `;
+                grid.appendChild(item);
+            });
+            grid.querySelectorAll('.party-name-input').forEach(i => i.addEventListener('input', e => { adminEditingParties[e.target.dataset.id].name = e.target.value; }));
+            grid.querySelectorAll('.party-color-input').forEach(i => i.addEventListener('input', e => { adminEditingParties[e.target.dataset.id].color = e.target.value; }));
+            grid.querySelectorAll('.party-img-input').forEach(i => i.addEventListener('change', async e => { const f = e.target.files[0]; if (f) { adminEditingParties[e.target.dataset.id].imageUrl = await compressImage(f); renderAdminPartyGrid(); } }));
+            grid.querySelectorAll('.btn-delete-party').forEach(b => b.addEventListener('click', e => { if (confirm(`ลบพรรค "${adminEditingParties[e.target.dataset.id].name}"?`)) { delete adminEditingParties[e.target.dataset.id]; renderAdminPartyGrid(); } }));
+            
+            grid.querySelectorAll('.btn-move-party').forEach(b => b.addEventListener('click', e => {
+                const dir = e.currentTarget.dataset.dir;
+                if (!dir) return;
+                const idx = parseInt(e.currentTarget.dataset.idx);
+                // keys is already sorted by order
+                if (dir === 'up' && idx > 0) {
+                    const temp = adminEditingParties[keys[idx]].order;
+                    adminEditingParties[keys[idx]].order = adminEditingParties[keys[idx-1]].order;
+                    adminEditingParties[keys[idx-1]].order = temp;
+                } else if (dir === 'down' && idx < keys.length - 1) {
+                    const temp = adminEditingParties[keys[idx]].order;
+                    adminEditingParties[keys[idx]].order = adminEditingParties[keys[idx+1]].order;
+                    adminEditingParties[keys[idx+1]].order = temp;
+                }
+                renderAdminPartyGrid();
+            }));
+        }
+
+        document.getElementById('btnAddParty').addEventListener('click', () => {
+            const id = 'party_' + Date.now();
+            const nextOrder = Object.keys(adminEditingParties).length;
+            adminEditingParties[id] = { id, name: 'พรรคใหม่', icon: '❔', color: '#667eea', imageUrl: '', order: nextOrder };
+            renderAdminPartyGrid();
+        });
+
+        document.getElementById('savePartyNames').addEventListener('click', async () => {
+            const btn = document.getElementById('savePartyNames');
+            btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+            try {
+                await sb.from('config').upsert({ key: 'partyDetails', value: { parties: adminEditingParties }, updated_at: new Date().toISOString() });
+                partyConfig = JSON.parse(JSON.stringify(adminEditingParties));
+                showToast('บันทึกการตั้งค่าพรรคเรียบร้อย', 'success');
+                loadResults();
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '💾 บันทึกการตั้งค่าพรรค';
+            }
+        });
+
+        // ===== STUDENT MANAGEMENT =====
+        document.getElementById('btnAddStudent').addEventListener('click', async () => {
+            const phone = document.getElementById('newPhone').value.trim();
+            const classroom = document.getElementById('newClassroom').value.trim();
+            const first_name = document.getElementById('newFirstName').value.trim();
+            const last_name = document.getElementById('newLastName').value.trim();
+
+            if (!phone || !classroom || !first_name || !last_name) { showToast('กรุณากรอกข้อมูลให้ครบ', 'warning'); return; }
+            if (phone.length !== 10) { showToast('เบอร์โทรต้องมี 10 หลัก', 'warning'); return; }
+
+            const btn = document.getElementById('btnAddStudent');
+            btn.disabled = true; btn.textContent = '⏳ กำลังเพิ่ม...';
+            try {
+                const { error } = await sb.from('students_master').insert({ phone, first_name, last_name, classroom, registered: false });
+                if (error) { if (error.code === '23505') throw new Error('เบอร์โทรนี้มีในระบบแล้ว'); throw error; }
+                showToast('เพิ่มรายชื่อสำเร็จ!', 'success');
+                document.getElementById('newPhone').value = '';
+                document.getElementById('newFirstName').value = '';
+                document.getElementById('newLastName').value = '';
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '➕ เพิ่มรายชื่อ';
+            }
+        });
+
+        document.getElementById('btnImportCsv').addEventListener('click', () => {
+            const file = document.getElementById('csvFileInput').files[0];
+            if (!file) { showToast('เลือกไฟล์ CSV ก่อน', 'warning'); return; }
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const rows = e.target.result.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+                if (rows.length === 0) { showToast('ไฟล์ว่าง', 'error'); return; }
+                const btn = document.getElementById('btnImportCsv');
+                btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...';
+                const data = [];
+                for (let i = 0; i < rows.length; i++) {
+                    const cols = rows[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                    if (i === 0 && (cols[0].toLowerCase().includes('phone') || cols[0] === 'เบอร์โทร')) continue;
+                    if (cols.length >= 4) data.push({ phone: cols[0], first_name: cols[1], last_name: cols[2], classroom: cols[3], registered: false });
+                }
+                if (data.length === 0) { showToast('ไม่พบข้อมูลที่ถูกต้อง', 'error'); btn.disabled = false; btn.textContent = '📄 นำเข้า CSV'; return; }
+                try {
+                    const { error } = await sb.from('students_master').insert(data);
+                    if (error) throw error;
+                    showToast(`นำเข้า ${data.length} คน สำเร็จ!`, 'success');
+                    document.getElementById('csvFileInput').value = '';
+                } catch (err) {
+                    showToast('Error: ' + (err.message || JSON.stringify(err)), 'error');
+                } finally { btn.disabled = false; btn.textContent = '📄 นำเข้า CSV'; }
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('btnImportText').addEventListener('click', async () => {
+            const rawText = document.getElementById('rawTextInput').value.trim();
+            const rawClassroom = document.getElementById('rawTextClassroom').value.trim();
+            if (!rawClassroom) { showToast('ระบุห้องเรียนก่อน', 'warning'); return; }
+            if (!rawText) { showToast('วางข้อความรายชื่อก่อน', 'warning'); return; }
+
+            const rows = rawText.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+            const btn = document.getElementById('btnImportText');
+            btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...';
+
+            const data = [];
+            for (let i = 0; i < rows.length; i++) {
+                const cols = rows[i].split(/\s+/).map(c => c.trim());
+                let phone, first_name, last_name, classroom;
+                if (cols.length >= 4 && !isNaN(cols[0]) && cols[0].length === 10) {
+                    phone = cols[0]; first_name = cols[1]; last_name = cols[2]; classroom = cols.slice(3).join(' ');
+                } else if (cols.length >= 2) {
+                    phone = '000' + Math.floor(1000000 + Math.random() * 9000000).toString();
+                    first_name = cols[0]; last_name = cols.slice(1).join(' '); classroom = rawClassroom;
+                } else continue;
+                data.push({ phone, first_name, last_name, classroom, registered: false });
+            }
+
+            if (data.length === 0) { showToast('ไม่พบรายชื่อที่ถูกต้อง', 'error'); btn.disabled = false; btn.textContent = '✅ นำเข้าจากข้อความ'; return; }
+            try {
+                const { error } = await sb.from('students_master').insert(data);
+                if (error) throw error;
+                showToast(`นำเข้า ${data.length} คน (ห้อง ${rawClassroom}) สำเร็จ!`, 'success');
+                document.getElementById('rawTextInput').value = '';
+                document.getElementById('rawTextClassroom').value = '';
+            } catch (err) {
+                showToast('Error: ' + (err.message || JSON.stringify(err)), 'error');
+            } finally { btn.disabled = false; btn.textContent = '✅ นำเข้าจากข้อความ'; }
+        });
+
+        console.log('P.TECH Vote 69 — Admin Panel initialized');
+    </script>
+</body>
+</html>
