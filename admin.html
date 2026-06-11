@@ -357,6 +357,15 @@
         .pwd-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
         .pwd-error { font-size: 0.83em; color: #ef4444; min-height: 20px; margin-bottom: 16px; font-weight: 500; }
 
+        /* ===== SWITCH TOGGLE ===== */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; }
+        input:focus + .slider { box-shadow: 0 0 1px #10b981; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
         /* ===== LOGIN PAGE ===== */
         .login-page {
             min-height: 100vh;
@@ -416,6 +425,7 @@
                     <button class="header-btn refresh" id="btnRefresh">🔄 รีเฟรช</button>
                     <a href="vote.html" class="header-btn vote-link" style="text-decoration:none;">🗳️ ไปหน้าโหวต</a>
                     <button class="header-btn danger" id="btnClearAll">🗑️ ล้างข้อมูลทั้งหมด</button>
+                    <button class="header-btn" id="btnTestConcurrent" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">🚀 ทดสอบโหวตพร้อมกัน</button>
                 </div>
             </div>
         </div>
@@ -1098,6 +1108,79 @@
         document.getElementById('btnRefresh').addEventListener('click', () => {
             loadAdminStats(true); loadResults(); loadCards();
             showToast('รีเฟรชข้อมูลแล้ว', 'info');
+        });
+
+        // ===== TEST CONCURRENT VOTES =====
+        document.getElementById('btnTestConcurrent').addEventListener('click', async () => {
+            const countStr = prompt('ต้องการทดสอบโหวตพร้อมกันกี่บัตร? (แนะนำ 10-20)', '20');
+            if (!countStr) return;
+            const count = parseInt(countStr, 10);
+            if (isNaN(count) || count <= 0) {
+                showToast('กรุณาระบุจำนวนตัวเลขที่ถูกต้อง', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btnTestConcurrent');
+            btn.disabled = true; btn.textContent = '⏳ กำลังทดสอบ...';
+            
+            try {
+                const parties = Object.keys(partyConfig);
+                const promises = Array.from({ length: count }).map(async (_, index) => {
+                    const randomParty = parties[Math.floor(Math.random() * parties.length)];
+                    const fakeCardId = 'TEST' + Date.now() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    const voteId = 'card_' + fakeCardId + '_' + Date.now();
+                    
+                    try {
+                        // 1. Insert Vote
+                        const {error: ve} = await sb.from('votes').insert({
+                            first_name: 'บัตรทดสอบ',
+                            last_name: fakeCardId,
+                            classroom: 'NFC',
+                            level: 'NFC',
+                            year: '0',
+                            room: '0',
+                            party: randomParty,
+                            device_id: voteId
+                        });
+                        if (ve) return { card: fakeCardId, status: 'error', msg: ve.message };
+                        
+                        // 2. Insert into card_registry
+                        const { error: ce } = await sb.from('card_registry').insert({
+                            card_id: fakeCardId,
+                            has_voted: true,
+                            voted_party: randomParty,
+                            voted_at: new Date().toISOString()
+                        });
+                        if (ce) return { card: fakeCardId, status: 'error', msg: ce.message };
+                        
+                        // 3. Increment classroom counter
+                        try {
+                            await sb.rpc('increment_voted_count', { p_classroom_id: 'NFC', p_level: 'NFC', p_year: '0', p_room: '0' });
+                        } catch (e) { console.warn('RPC fail:', e); }
+                        
+                        return { card: fakeCardId, status: 'success' };
+                    } catch(e) {
+                        return { card: fakeCardId, status: 'error', msg: e.message };
+                    }
+                });
+                
+                const results = await Promise.all(promises);
+                const successCount = results.filter(r => r.status === 'success').length;
+                const errorCount = results.length - successCount;
+                
+                console.log("Test concurrent votes results:", results);
+                showToast(`ทดสอบเสร็จสิ้น สำเร็จ ${successCount} ใบ, ล้มเหลว ${errorCount} ใบ (เช็ค Console)`, successCount > 0 ? 'success' : 'error', 5000);
+                
+                loadAdminStats(true); 
+                loadResults(); 
+                loadCards();
+                
+            } catch (err) {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาดในการทดสอบ: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🚀 ทดสอบโหวตพร้อมกัน';
+            }
         });
 
         // ===== PARTY SETTINGS =====

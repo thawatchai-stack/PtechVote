@@ -51,7 +51,7 @@
         }
 
         /* ===== PAGE WRAPPER ===== */
-        .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+        .page { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 24px 16px 60px; min-height: 100vh; display: flex; flex-direction: column; }
 
         /* ===== TOP BAR ===== */
         .topbar {
@@ -217,6 +217,7 @@
             gap: 12px;
             margin-bottom: 36px;
             min-height: 300px;
+            flex-grow: 1;
             padding: 0 8px;
         }
 
@@ -225,7 +226,7 @@
             flex-direction: column;
             align-items: center;
             flex: 1;
-            max-width: 180px;
+            max-width: 320px;
             transition: all 0.5s ease;
         }
 
@@ -726,25 +727,7 @@
         <button id="btnTieBreaker" class="btn-draw" style="display:none;">🎲 จับฉลากสุ่มหาผู้ชนะ</button>
     </div>
 
-    <!-- FULL TABLE -->
-    <div class="section-hd">📋 ผลคะแนนรายพรรค</div>
-    <div class="results-table" id="resultsTable">
-        <div class="rt-row header">
-            <div>อันดับ</div>
-            <div>พรรค</div>
-            <div class="rt-bar-col"></div>
-            <div style="text-align:right">คะแนน</div>
-        </div>
-        <!-- Rows injected by JS -->
-    </div>
-
-    <!-- CLASSROOM PARTICIPATION -->
-    <div class="section-hd">🏫 สถิติรายห้อง</div>
-    <div class="classroom-list" id="classroomList">
-        <div class="loading-screen" style="grid-column:1/-1">
-            <div class="spinner"></div>
-        </div>
-    </div>
+    <!-- LOWER SECTIONS REMOVED AS REQUESTED -->
 
     <!-- DRAW MODAL -->
     <div class="modal" id="drawModal">
@@ -791,31 +774,37 @@
         return 4294967296 * (2097151 & h2) + (h1 >>> 0);
     }
 
-    // default for unknown parties (Anonymous Mode)
-    function getMeta(partyId) {
-        // Create a stable random mapping for the current set of parties
-        const keys = Object.keys(partyConfig).sort();
-        const seed = cyrb53(keys.join(','));
-        
-        // Build a shuffled array of indices using a simple linear congruential generator
-        let indices = Array.from({length: keys.length}, (_, i) => i + 1);
-        let m = indices.length, t, i;
-        let lcg = seed;
-        while (m) {
-            lcg = (lcg * 1664525 + 1013904223) % 4294967296;
-            i = Math.floor((lcg / 4294967296) * m--);
-            t = indices[m];
-            indices[m] = indices[i];
-            indices[i] = t;
+    // ===== LOAD PARTY CONFIG =====
+    async function loadConfig() {
+        try {
+            const { data } = await supabase.from('config').select('value').eq('key', 'partyDetails').single();
+            if (data && data.value && data.value.parties) {
+                partyConfig = data.value.parties;
+            }
+        } catch (e) {
+            console.error('Error loading config:', e);
         }
+    }
 
-        const partyIndex = keys.indexOf(partyId);
-        const mysteryNumber = partyIndex !== -1 ? indices[partyIndex] : '?';
+    // Subscribe to config changes to real-time update
+    supabase.channel('config-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'config' }, payload => {
+            if (payload.new.key === 'partyDetails') {
+                partyConfig = payload.new.value.parties;
+                processAndRender();
+            }
+        }).subscribe();
+
+    // Get party metadata
+    function getMeta(partyId) {
+        if (partyConfig[partyId]) {
+            return partyConfig[partyId];
+        }
         
         return { 
             id: partyId, 
-            name: `พรรคปริศนา ${mysteryNumber}`, 
-            icon: '👤', 
+            name: partyId, 
+            icon: '🗳️', 
             color: '#94a3b8', 
             imageUrl: '' 
         };
@@ -838,9 +827,6 @@
     // ===== RENDER PODIUM =====
     function renderPodium(sorted, totalVotes) {
         const wrap = document.getElementById('podiumWrap');
-        const maxH = 220;
-        const minH = 20;
-        const maxVotes = sorted[0]?.votes || 1;
 
         const ordered = podiumOrder(sorted);
         // Assign same rank to tied parties
@@ -866,18 +852,25 @@
             const rank   = rankMap[party.name];
             const meta   = getMeta(party.name);
             const pct    = totalVotes > 0 ? (party.votes / totalVotes * 100).toFixed(1) : '0.0';
-            const barH   = Math.max(minH, Math.round((party.votes / maxVotes) * maxH));
 
             const isTied = sorted.filter(p => p.votes === party.votes && party.votes > 0).length > 1;
             const rankCls = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'r-other';
             const colCls  = rank === 1 ? 'r1-col' : '';
             const rankLbl = rank === 1 ? (isTied ? '🥇=' : '🥇') : rank === 2 ? (isTied ? '🥈=' : '🥈') : rank === 3 ? (isTied ? '🥉=' : '🥉') : `#${rank}`;
 
-            let iconHtml = questionMarkIcon;
+            let imgWidth = 120;
+            if (rank === 1) imgWidth = 260;
+            else if (rank === 2) imgWidth = 200;
+            else if (rank === 3) imgWidth = 160;
+
+            let iconHtml = meta.imageUrl 
+                ? `<img src="${meta.imageUrl}" style="width:${imgWidth}px; height:auto; object-fit:contain; border-radius:12px; border:4px solid ${meta.color}; background:white; transition:all 0.5s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">` 
+                : `<div style="font-size:${imgWidth/2.5}px; width:${imgWidth}px; height:${imgWidth}px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border-radius:12px; border:4px solid ${meta.color}; transition:all 0.5s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">${meta.icon || '🗳️'}</div>`;
 
             const col = document.createElement('div');
             col.className = `podium-col ${colCls}`;
             col.style.position = 'relative';
+            col.style.justifyContent = 'flex-end'; // Align to bottom
             col.innerHTML = `
                 <div class="winner-fx">
                     <div class="glow"></div>
@@ -885,18 +878,18 @@
                     <div class="fw fw2"></div>
                     <div class="fw fw3"></div>
                 </div>
-                <div class="rank-badge ${rankCls}">${rankLbl}</div>
-                <div class="p-icon" style="width: 50px; height: 70px; display:flex; align-items:center; justify-content:center; position:relative;">
+                
+                <div style="display:flex; flex-direction:column; align-items:center; position:relative; z-index:2; padding-bottom: 10px;">
                     ${iconHtml}
-                    <div class="winner-ribbon">🏆 ผู้ชนะ</div>
                 </div>
-                <div class="p-bar-wrap">
-                    <div class="p-votes" style="color: ${meta.color}">${party.votes.toLocaleString()}</div>
-                    <div class="p-pct">${pct}%</div>
-                    <div class="p-bar" style="height:${barH}px; background: ${meta.color}"></div>
+                
+                <div class="p-bar-wrap" style="height: auto; min-height: unset; padding-top: 25px;">
+                    <div class="p-votes" style="color: ${meta.color}; font-size: ${rank === 1 ? '2.5em' : '1.8em'}; line-height: 1; font-weight: 900;">${party.votes.toLocaleString()}</div>
+                    <div class="p-pct" style="font-size: 1.1em; opacity: 0.8; margin-bottom: 10px;">${pct}%</div>
                 </div>
-                <div class="platform-base">
-                    <div class="p-name">${meta.name}</div>
+                
+                <div class="platform-base" style="border-top: 4px solid ${meta.color};">
+                    <div class="p-name" style="font-size: 1.1em;">${meta.name}</div>
                 </div>
             `;
             wrap.appendChild(col);
@@ -905,61 +898,7 @@
 
     // ===== RENDER TABLE =====
     function renderTable(sorted, totalVotes) {
-        const table  = document.getElementById('resultsTable');
-        const maxVotes = sorted[0]?.votes || 1;
-
-        // keep header row
-        const header = table.querySelector('.rt-row.header');
-        table.innerHTML = '';
-        table.appendChild(header);
-
-        if (sorted.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'no-data';
-            empty.textContent = 'ยังไม่มีข้อมูล';
-            table.appendChild(empty);
-            return;
-        }
-
-        sorted.forEach((party, i) => {
-            const meta  = getMeta(party.name);
-            const pct   = totalVotes > 0 ? (party.votes / totalVotes * 100).toFixed(1) : '0.0';
-            const barW  = maxVotes > 0 ? (party.votes / maxVotes * 100) : 0;
-
-            // Compute true rank (same as tied parties)
-            let trueRank = 1;
-            for (let j = 0; j < i; j++) {
-                if (sorted[j].votes > party.votes) trueRank = j + 2;
-            }
-            // Check if this party is in a tie
-            const isTied = sorted.filter(p => p.votes === party.votes && party.votes > 0).length > 1;
-            const rankEmoji = trueRank === 1 ? (isTied ? '🥇=' : '🥇') 
-                            : trueRank === 2 ? (isTied ? '🥈=' : '🥈') 
-                            : trueRank === 3 ? (isTied ? '🥉=' : '🥉') 
-                            : `${trueRank}${isTied ? '=' : ''}`;
-
-            let imgHtml = questionMarkIcon;
-
-            const row = document.createElement('div');
-            row.className = 'rt-row';
-            row.innerHTML = `
-                <div class="rt-rank">${rankEmoji}</div>
-                <div class="rt-party">
-                    <span class="rt-party-icon" style="display:flex; align-items:center; width: 30px; height: 42px;">${imgHtml}</span>
-                    <span class="rt-party-name">${meta.name}</span>
-                </div>
-                <div class="rt-bar-col">
-                    <div class="rt-mini-bar">
-                        <div class="rt-mini-fill" style="width:${barW}%;background:${meta.color}"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="rt-votes" style="color:${meta.color}">${party.votes.toLocaleString()}</div>
-                    <div class="rt-pct">${pct}%</div>
-                </div>
-            `;
-            table.appendChild(row);
-        });
+        // Table removed from UI
     }
 
     // ===== RENDER STATS =====
@@ -979,79 +918,7 @@
 
     // ===== RENDER CLASSROOMS =====
     function renderClassrooms(classrooms) {
-        const list = document.getElementById('classroomList');
-        list.innerHTML = '';
-        list.style.display = '';
-
-        if (classrooms.length === 0) {
-            list.innerHTML = '<div class="no-data" style="grid-column:1/-1">ยังไม่มีข้อมูลห้องเรียน</div>';
-            return;
-        }
-
-        let lastGroup = null;
-        let lastYear = null;
-        let currentYearContainer = null;
-
-        classrooms.forEach(c => {
-            const voted = c.voted_count    || 0;
-            const total = c.total_students || 0;
-            const pct   = total > 0 ? (voted / total * 100) : 0;
-            const full  = pct >= 100;
-
-            const yearMatch = c.id.match(/^(ปวช|ปวส)\.(\d+)[/-]/);
-            const group = yearMatch ? yearMatch[1] : '';
-            const year = yearMatch ? yearMatch[2] : '';
-
-            if (group && group !== lastGroup) {
-                const gh = document.createElement('div');
-                gh.style.cssText = 'grid-column: 1 / -1; font-size: 1.1em; font-weight: 700; color: var(--accent); margin-top: 15px; padding-bottom: 6px; border-bottom: 2px solid rgba(255,255,255,0.05);';
-                gh.textContent = group === 'ปวช' ? '📘 ปวช.' : '📗 ปวส.';
-                list.appendChild(gh);
-                lastGroup = group;
-                lastYear = null;
-            }
-
-            if (year && year !== lastYear) {
-                const yRow = document.createElement('div');
-                yRow.style.cssText = 'display: flex; gap: 15px; margin-bottom: 12px; margin-top: 10px; width: 100%;';
-                
-                const yLabel = document.createElement('div');
-                yLabel.style.cssText = 'flex-shrink: 0; width: 44px; height: 50px; background: rgba(255,255,255,0.05); border: 2px solid var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.8em; color: var(--accent); margin-top: 5px;';
-                yLabel.textContent = year;
-
-                const yCards = document.createElement('div');
-                yCards.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; flex: 1;';
-                
-                yRow.appendChild(yLabel);
-                yRow.appendChild(yCards);
-                list.appendChild(yRow);
-
-                currentYearContainer = yCards;
-                lastYear = year;
-            }
-
-            const cardId = `cls-card-${c.id.replace(/[\/\.]/g, '-')}`;
-            const card = document.createElement('div');
-            card.className = 'cls-card';
-            card.id = cardId;
-            card.innerHTML = `
-                <div class="cls-top">
-                    <div class="cls-name">${c.id}</div>
-                    <div class="cls-count" id="count-${cardId}">${voted}/${total > 0 ? total : '?'}</div>
-                </div>
-                <div class="cls-bar">
-                    <div class="cls-fill ${full ? 'full' : ''}" id="fill-${cardId}" style="width:${Math.min(pct, 100)}%"></div>
-                </div>
-                <div class="cls-pct" id="pct-${cardId}">${total > 0 ? pct.toFixed(1) + '%' : 'ไม่ระบุจำนวน'}</div>
-            `;
-            
-            if (currentYearContainer) {
-                currentYearContainer.appendChild(card);
-            } else {
-                card.style.cssText = 'display: inline-block; width: 220px; margin: 0 12px 12px 0; vertical-align: top;';
-                list.appendChild(card);
-            }
-        });
+        // Classrooms list removed from UI
     }
 
     // ===== SORT CLASSROOMS =====
@@ -1171,18 +1038,6 @@
         }, 3000);
     }
 
-    // ===== LOAD PARTY CONFIG FROM DB =====
-    async function loadPartyConfig() {
-        try {
-            const { data } = await supabase.from('config').select('value').eq('key', 'partyDetails').maybeSingle();
-            if (data && data.value && data.value.parties) {
-                partyConfig = data.value.parties;
-            }
-        } catch (e) {
-            console.error('Error loading party config:', e);
-        }
-    }
-
     // ===== REALTIME DATA HANDLING =====
     async function reloadVotesTally() {
         try {
@@ -1220,14 +1075,14 @@
     async function initializeRealtimeListeners() {
         document.getElementById('lastUpdate').textContent = '⏳ กำลังโหลด...';
         try {
-            await loadPartyConfig();
+            await loadConfig();
             await reloadVotesTally();
             await reloadClassrooms();
             await loadTieBreaker();
 
             // Polling every 10 seconds
             setInterval(() => {
-                loadPartyConfig();
+                loadConfig();
                 reloadVotesTally();
                 reloadClassrooms();
             }, 10000);
