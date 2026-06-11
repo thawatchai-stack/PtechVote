@@ -688,7 +688,9 @@
 
     <!-- Debug Toggle & Box -->
     <button class="debug-toggle" id="debugToggle">🔧 Debug</button>
-    <button class="fullscreen-btn" id="fullscreenBtn" title="เต็มหน้าจอ">⛶</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="เต็มหน้าจอ">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+    </button>
     <div class="debug-box" id="debugBox" style="display:none;">
         <div class="debug-label">🔍 Card Reader Debug</div>
         <div>Status: <span id="debugStatus" style="color:#4ade80;">รอแตะบัตร...</span></div>
@@ -1048,12 +1050,17 @@
             }
         });
 
+        const svgEnter = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>';
+        const svgExit = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>';
+
         // Update button icon based on fullscreen state
         document.addEventListener('fullscreenchange', () => {
             if (document.fullscreenElement) {
-                fullscreenBtn.innerHTML = '🗗'; // Exit fullscreen icon
+                fullscreenBtn.innerHTML = svgExit;
+                fullscreenBtn.title = 'ย่อหน้าจอ';
             } else {
-                fullscreenBtn.innerHTML = '⛶'; // Enter fullscreen icon
+                fullscreenBtn.innerHTML = svgEnter;
+                fullscreenBtn.title = 'เต็มหน้าจอ';
             }
         });
 
