@@ -186,6 +186,32 @@
             color: rgba(255,255,255,0.6);
         }
 
+        /* ===== FULLSCREEN BUTTON ===== */
+        .fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            border-radius: 10px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .fullscreen-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transform: scale(1.05);
+        }
+
         /* ===== PAGE 2: ALREADY VOTED ===== */
         .already-voted-page {
             text-align: center;
@@ -662,6 +688,7 @@
 
     <!-- Debug Toggle & Box -->
     <button class="debug-toggle" id="debugToggle">🔧 Debug</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="เต็มหน้าจอ">⛶</button>
     <div class="debug-box" id="debugBox" style="display:none;">
         <div class="debug-label">🔍 Card Reader Debug</div>
         <div>Status: <span id="debugStatus" style="color:#4ade80;">รอแตะบัตร...</span></div>
@@ -1005,6 +1032,29 @@
         document.getElementById('debugToggle').addEventListener('click', () => {
             debugVisible = !debugVisible;
             document.getElementById('debugBox').style.display = debugVisible ? 'block' : 'none';
+        });
+
+        // ===== FULLSCREEN TOGGLE =====
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        // Update button icon based on fullscreen state
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.innerHTML = '🗗'; // Exit fullscreen icon
+            } else {
+                fullscreenBtn.innerHTML = '⛶'; // Enter fullscreen icon
+            }
         });
 
         // ===== LOAD PARTY CONFIG =====
