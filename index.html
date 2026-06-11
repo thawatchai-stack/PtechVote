@@ -598,8 +598,8 @@
         <div class="loading-spinner"></div>
     </div>
 
-    <!-- Hidden input for card reader -->
-    <input type="text" class="card-input-hidden" id="cardInput" autocomplete="off" autofocus>
+    <!-- Hidden input for card reader (inputmode="none" prevents soft keyboard from showing) -->
+    <input type="text" class="card-input-hidden" id="cardInput" inputmode="none" readonly autocomplete="off" autofocus>
 
     <!-- ===== PAGE 1: TAP CARD ===== -->
     <div class="page-view active" id="pageTapCard">
